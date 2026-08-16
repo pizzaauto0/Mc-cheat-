@@ -10,6 +10,10 @@ contextBridge.exposeInMainWorld('cheathub', {
   setMinecraftParam: (id, key, value) => ipcRenderer.invoke('minecraft:setParam', { id, key, value }),
   triggerMinecraftAction: (id) => ipcRenderer.invoke('minecraft:action', { id }),
 
+  getConfig: () => ipcRenderer.invoke('config:get'),
+  getAllowedHotkeys: () => ipcRenderer.invoke('config:allowedHotkeys'),
+  setConfig: (partial) => ipcRenderer.invoke('config:set', partial),
+
   onGameStatus: (callback) => {
     const listener = (_evt, payload) => callback(payload);
     ipcRenderer.on('game-status', listener);

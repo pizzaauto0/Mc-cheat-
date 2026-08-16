@@ -55,6 +55,18 @@ langem stabile, gut dokumentierte APIs.
 4. Minecraft mit dem Fabric-Profil starten, Singleplayer-Welt öffnen.
 5. CheatHub-App starten – sie verbindet sich automatisch, sobald Minecraft läuft.
 
+## Konfiguration (Port)
+
+Der Mod legt beim ersten Start `config/cheatbridge.properties` im Minecraft-Ordner an:
+
+```properties
+port=34551
+```
+
+Falls Port 34551 bei dir belegt ist, hier und im CheatHub-Einstellungen-Panel (⚙
+Einstellungen → "Minecraft-Bridge-Port") denselben neuen Port eintragen und Minecraft
+neu starten.
+
 ## Protokoll
 
 Siehe Kommentar am Kopf von `src/main/java/net/pizzaauto/cheatbridge/net/BridgeServer.java`

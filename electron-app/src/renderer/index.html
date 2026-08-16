@@ -21,6 +21,7 @@
       <div id="game-list" class="game-list"></div>
 
       <div class="sidebar-footer">
+        <button id="config-btn" class="config-btn" title="Einstellungen">⚙ Einstellungen</button>
         <button id="add-game-btn" class="add-game-btn" disabled title="Weitere Spiele folgen">+ Spiel hinzufuegen</button>
       </div>
     </aside>
@@ -46,6 +47,32 @@
         <div id="hint-banner" class="hint-banner hidden"></div>
 
         <div id="cheat-categories" class="cheat-categories"></div>
+      </div>
+
+      <div id="config-panel" class="config-panel hidden">
+        <header class="panel-header">
+          <div>
+            <h1>Einstellungen</h1>
+            <div class="panel-subtitle">Gilt fuer die ganze App</div>
+          </div>
+        </header>
+
+        <div class="config-form">
+          <div class="config-row">
+            <label for="hotkey-select">Menue oeffnen/schliessen mit</label>
+            <select id="hotkey-select"></select>
+            <div class="config-hint">Globaler Hotkey -- funktioniert auch, wenn Minecraft im Vordergrund ist.</div>
+          </div>
+
+          <div class="config-row">
+            <label for="port-input">Minecraft-Bridge-Port</label>
+            <input id="port-input" type="number" min="1" max="65535" step="1" />
+            <div class="config-hint">Muss mit dem Port im CheatBridge-Mod uebereinstimmen (Standard 34551, einstellbar in <code>config/cheatbridge.properties</code> im Minecraft-Mods-Ordner).</div>
+          </div>
+
+          <button id="config-save-btn" class="action-btn config-save-btn">Speichern</button>
+          <div id="config-saved-msg" class="config-saved-msg hidden">Gespeichert.</div>
+        </div>
       </div>
     </main>
   </div>

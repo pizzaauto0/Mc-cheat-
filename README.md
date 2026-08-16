@@ -42,6 +42,14 @@ Die App zeigt "Minecraft: nicht erkannt", bis Minecraft läuft. Sobald ein Proze
 `javaw`/`java` erkannt wird, versucht sie sich mit dem Mod zu verbinden. Läuft eine Welt,
 werden die Cheats im Panel aktiv klickbar.
 
+## Menü per Hotkey öffnen/schließen
+
+Ein globaler Hotkey (Standard: **Einfg/Insert**, alternativ z.B. **F7** einstellbar)
+blendet das CheatHub-Fenster ein und aus – funktioniert systemweit, auch wenn Minecraft
+gerade im Vordergrund ist. Einstellbar unter **⚙ Einstellungen** in der Sidebar, zusammen
+mit dem Minecraft-Bridge-Port (falls 34551 bei dir belegt ist). Die Einstellungen werden
+in `config.json` im App-Datenverzeichnis gespeichert und bleiben über Neustarts erhalten.
+
 ## Neues Spiel hinzufügen (später)
 
 Jedes Spiel ist ein Modul unter `electron-app/src/main/games/*.js` mit:

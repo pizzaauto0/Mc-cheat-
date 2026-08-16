@@ -10,6 +10,13 @@ const statusTextEl = document.getElementById('status-text');
 const hintBannerEl = document.getElementById('hint-banner');
 const categoriesEl = document.getElementById('cheat-categories');
 
+const configBtnEl = document.getElementById('config-btn');
+const configPanelEl = document.getElementById('config-panel');
+const hotkeySelectEl = document.getElementById('hotkey-select');
+const portInputEl = document.getElementById('port-input');
+const configSaveBtnEl = document.getElementById('config-save-btn');
+const configSavedMsgEl = document.getElementById('config-saved-msg');
+
 let games = [];
 let selectedGameId = null;
 let running = {}; // gameId -> bool (process detected)
@@ -65,6 +72,7 @@ function selectGame(gameId) {
   const game = games.find((g) => g.id === gameId);
   if (!game) return;
 
+  configPanelEl.classList.add('hidden');
   emptyStateEl.classList.add('hidden');
   gamePanelEl.classList.remove('hidden');
   panelTitleEl.textContent = game.name;
@@ -73,6 +81,14 @@ function selectGame(gameId) {
   renderGameList();
   renderCheatCatalog(game);
   setConnectionStatus();
+}
+
+function showConfigPanel() {
+  emptyStateEl.classList.add('hidden');
+  gamePanelEl.classList.add('hidden');
+  configPanelEl.classList.remove('hidden');
+  configSavedMsgEl.classList.add('hidden');
+  renderGameList();
 }
 
 function renderCheatCatalog(game) {
@@ -172,11 +188,40 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+async function initConfigPanel() {
+  const [config, allowedHotkeys] = await Promise.all([
+    window.cheathub.getConfig(),
+    window.cheathub.getAllowedHotkeys()
+  ]);
+
+  hotkeySelectEl.innerHTML = '';
+  for (const key of allowedHotkeys) {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = key === 'Insert' ? 'Einfg (Insert)' : key;
+    hotkeySelectEl.appendChild(option);
+  }
+  hotkeySelectEl.value = config.hotkey;
+  portInputEl.value = config.minecraftBridgePort;
+
+  configBtnEl.addEventListener('click', showConfigPanel);
+
+  configSaveBtnEl.addEventListener('click', async () => {
+    await window.cheathub.setConfig({
+      hotkey: hotkeySelectEl.value,
+      minecraftBridgePort: parseInt(portInputEl.value, 10)
+    });
+    configSavedMsgEl.classList.remove('hidden');
+  });
+}
+
 async function init() {
   games = await window.cheathub.listGames();
   for (const g of games) running[g.id] = g.running;
 
   if (games.length > 0) selectGame(games[0].id);
+
+  await initConfigPanel();
 
   window.cheathub.onGameStatus(({ gameId, running: isRunning }) => {
     running[gameId] = isRunning;

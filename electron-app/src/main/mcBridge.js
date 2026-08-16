@@ -32,6 +32,19 @@ class MinecraftBridge extends EventEmitter {
     this._open();
   }
 
+  /** Aendert Host/Port zur Laufzeit (z.B. aus der Config-UI) und verbindet bei Bedarf neu. */
+  setEndpoint(host, port) {
+    if (this.host === host && this.port === port) return;
+    this.host = host;
+    this.port = port;
+
+    const wasActive = this._shouldConnect;
+    if (wasActive) {
+      this.disconnect();
+      this.connect();
+    }
+  }
+
   disconnect() {
     this._shouldConnect = false;
     if (this._reconnectTimer) {

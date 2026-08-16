@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.pizzaauto.cheatbridge.CheatBridgeClient;
 import net.pizzaauto.cheatbridge.CheatManager;
+import net.pizzaauto.cheatbridge.ModConfig;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -31,7 +32,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BridgeServer extends WebSocketServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("CheatBridge");
-    private static final int PORT = 34551;
+
+    // Wird einmalig beim Klassenladen ausgewertet, damit der Port schon fuer den
+    // super(...)-Aufruf im Konstruktor zur Verfuegung steht (config/cheatbridge.properties).
+    private static final ModConfig CONFIG = ModConfig.load();
 
     private final CheatManager cheats;
     private final Gson gson = new Gson();
@@ -39,14 +43,14 @@ public class BridgeServer extends WebSocketServer {
     private Map<String, Object> lastBroadcastState = null;
 
     public BridgeServer(CheatManager cheats) {
-        super(new InetSocketAddress("127.0.0.1", PORT));
+        super(new InetSocketAddress("127.0.0.1", CONFIG.port));
         this.cheats = cheats;
         setReuseAddr(true);
     }
 
     @Override
     public void onStart() {
-        LOGGER.info("CheatBridge WebSocket-Server laeuft auf 127.0.0.1:{}", PORT);
+        LOGGER.info("CheatBridge WebSocket-Server laeuft auf 127.0.0.1:{}", CONFIG.port);
     }
 
     @Override
