@@ -13,10 +13,18 @@ direkt den integrierten Server anspricht statt Pakete an einen fremden Server zu
 ## Build
 
 Voraussetzungen: JDK 21, Internetzugriff für Gradle/Fabric-Maven beim ersten Build.
+Der Gradle-Wrapper liegt schon im Repo, du brauchst **kein separates Gradle** zu
+installieren.
 
+**Windows (cmd/PowerShell):**
+```
+cd minecraft-mod
+gradlew.bat build
+```
+
+**Linux/macOS:**
 ```bash
 cd minecraft-mod
-gradle wrapper --gradle-version 8.10   # einmalig, falls kein Gradle-Wrapper vorhanden ist
 ./gradlew build
 ```
 
@@ -42,6 +50,10 @@ Wahrscheinlichste Punkte für kleine Anpassungen nach dem ersten Build:
   ("Equipment Assets") in 1.21.x umgebaut, hier ist am ehesten eine kleine Anpassung nötig.
 - **`MinecraftServer#getTickManager()#setTickRate()`** (Game-Speed/Timer) – existiert seit
   1.20.2 als Basis für den vanilla `/tick rate`-Befehl, Methodenname kann leicht variieren.
+- **`loom_version` in `gradle.properties`** – muss eine exakte Versionsnummer sein
+  (keine Ranges wie `1.14.+`, das lehnt Gradles `plugins{}`-Block ab). Falls
+  `gradlew build` mit "Plugin ... was not found" abbricht: aktuelle Version auf
+  [fabricmc.net/develop](https://fabricmc.net/develop/) nachschauen und eintragen.
 
 Alles andere (Cheat-Logik, WebSocket-Server, Attribute wie Speed/Fastbreak) nutzt seit
 langem stabile, gut dokumentierte APIs.
