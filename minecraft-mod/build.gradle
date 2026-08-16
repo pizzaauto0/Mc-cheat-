@@ -15,14 +15,9 @@ repositories {
     maven { url = 'https://maven.fabricmc.net/' }
 }
 
-loom {
-    // 1.21.11 ist eine der letzten obfuskierten Versionen -- offizielle Mojang-Mappings
-    // sind fuer neue Versionen der empfohlene Weg (siehe Fabric-Blog zu 1.21.11).
-}
-
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
