@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import net.pizzaauto.cheatbridge.net.BridgeServer;
 import net.pizzaauto.cheatbridge.render.BlockEspRenderer;
 import net.pizzaauto.cheatbridge.render.EspRenderer;
@@ -24,6 +25,10 @@ public class CheatBridgeClient implements ClientModInitializer {
     public static final String MOD_ID = "cheatbridge";
     public static final String MOD_VERSION = "0.1.0";
 
+    // Neuere Minecraft-Versionen verlangen fuer Tastenbelegungen ein Category-Objekt
+    // statt eines simplen String-Schluessels wie frueher.
+    private static final KeyBinding.Category CATEGORY = KeyBinding.Category.create(Identifier.of(MOD_ID, "main"));
+
     public static CheatManager CHEATS;
     private static BridgeServer server;
     private static KeyBinding addWaypointKey;
@@ -38,7 +43,7 @@ public class CheatBridgeClient implements ClientModInitializer {
                 "key.cheatbridge.add_waypoint",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_K,
-                "category.cheatbridge"
+                CATEGORY
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {

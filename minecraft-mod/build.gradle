@@ -46,3 +46,32 @@ java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
 }
+
+// Diagnose-Task: durchsucht alle Abhaengigkeits-Jars nach Klassen mit einem der
+// angegebenen einfachen Namen und druckt den vollen (aktuellen) Paketpfad. Damit
+// laesst sich schnell herausfinden, wohin eine Klasse in dieser Mapping-Version
+// verschoben wurde, ohne die Jars von Hand zu durchsuchen.
+// Aufruf: gradlew.bat findSymbols
+tasks.register('findSymbols') {
+    doLast {
+        def targets = ['GameRules', 'ArmorItem', 'WorldRenderEvents', 'WorldRenderContext',
+                        'ClientLifecycleEvents', 'RenderLayer', 'FoodComponent', 'EntityAttributes']
+        sourceSets.main.compileClasspath.files.each { f ->
+            if (!f.name.endsWith('.jar')) return
+            try {
+                new java.util.jar.JarFile(f).withCloseable { jar ->
+                    jar.entries().each { entry ->
+                        def name = entry.name
+                        if (!name.endsWith('.class') || name.contains('$')) return
+                        def simple = name.substring(name.lastIndexOf('/') + 1, name.length() - 6)
+                        if (targets.contains(simple)) {
+                            println "${simple} -> ${name.replace('/', '.').replace('.class', '')}   (${f.name})"
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // nicht lesbare/relevante Jars ueberspringen
+            }
+        }
+    }
+}
