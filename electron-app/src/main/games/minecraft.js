@@ -70,6 +70,30 @@ const CHEAT_CATALOG = [
     ]
   },
   {
+    category: 'Kampf',
+    cheats: [
+      {
+        id: 'killAura',
+        label: 'Kill Aura (nur Mobs/Tiere)',
+        type: 'toggle',
+        description: 'Greift automatisch nahe Mobs und Tiere an. Greift NIEMALS andere Spieler an (fest im Code ausgeschlossen).'
+      },
+      {
+        id: 'killAuraRange',
+        label: 'Kill-Aura-Reichweite',
+        type: 'slider',
+        description: 'Radius in Bloecken, in dem die Kill Aura Ziele sucht.',
+        min: 2, max: 8, step: 0.5, default: 4
+      },
+      {
+        id: 'antiKnockback',
+        label: 'Anti-Knockback',
+        type: 'toggle',
+        description: 'Reduziert Rueckstoss durch Treffer stark. Hinweis: Minecraft unterscheidet dabei nicht zwischen Tier- und Spieler-Treffern, wirkt also technisch auf beides.'
+      }
+    ]
+  },
+  {
     category: 'Sofort-Aktionen',
     cheats: [
       { id: 'heal', label: 'Vollstaendig heilen', type: 'action', description: 'Setzt Leben und Saettigung sofort auf Maximum.' },

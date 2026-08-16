@@ -10,12 +10,15 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -54,6 +57,7 @@ public class CheatManager {
     private static final Identifier SPEED_MOD_ID = Identifier.of(CheatBridgeClient.MOD_ID, "speed");
     private static final Identifier BREAK_MOD_ID = Identifier.of(CheatBridgeClient.MOD_ID, "fast_break");
     private static final Identifier STEP_MOD_ID = Identifier.of(CheatBridgeClient.MOD_ID, "step_height");
+    private static final Identifier KNOCKBACK_MOD_ID = Identifier.of(CheatBridgeClient.MOD_ID, "anti_knockback");
 
     private static final int WORLD_SCAN_INTERVAL_TICKS = 40; // ~2s
     private static final int WORLD_SCAN_RADIUS_CHUNKS = 3;
@@ -92,11 +96,14 @@ public class CheatManager {
     public boolean autoTotem = false;
     public boolean autoEat = false;
     public boolean autoArmor = false;
+    public boolean killAura = false;
+    public boolean antiKnockback = false;
 
     // --- Parameter (Slider) ---
     public double speedMultiplier = 2.0;
     public double jumpMultiplier = 2.0;
     public double fastBreakMultiplier = 4.0;
+    public double killAuraRange = 4.0;
 
     public final List<Waypoint> waypoints = new ArrayList<>();
 
@@ -136,6 +143,8 @@ public class CheatManager {
                 case "autoTotem" -> autoTotem = enabled;
                 case "autoEat" -> autoEat = enabled;
                 case "autoArmor" -> autoArmor = enabled;
+                case "killAura" -> killAura = enabled;
+                case "antiKnockback" -> antiKnockback = enabled;
                 default -> { /* unbekannte Id ignorieren */ }
             }
         });
@@ -148,6 +157,7 @@ public class CheatManager {
                 case "speed" -> speedMultiplier = value;
                 case "jumpBoost" -> jumpMultiplier = value;
                 case "fastBreak" -> fastBreakMultiplier = value;
+                case "killAuraRange" -> killAuraRange = value;
                 default -> { /* unbekannte Id ignorieren */ }
             }
         });
@@ -211,6 +221,8 @@ public class CheatManager {
         applyAutoTotem(sp);
         applyAutoEat(sp);
         applyAutoArmor(sp);
+        applyKillAura(sp);
+        applyAntiKnockback(sp);
 
         if (tickCounter % WORLD_SCAN_INTERVAL_TICKS == 0) {
             scanWorld(sp);
@@ -454,6 +466,47 @@ public class CheatManager {
     }
 
     /**
+     * Greift automatisch das naechste lebende Wesen im Umkreis an -- Spieler sind
+     * hart ausgeschlossen (Filter unten), diese Kill Aura wirkt ausschliesslich
+     * gegen Mobs und Tiere. Rammt keine Waende (keine Sichtlinienpruefung), das ist
+     * eine bewusste Vereinfachung fuer den ersten Wurf.
+     */
+    private void applyKillAura(ServerPlayerEntity sp) {
+        if (!killAura) return;
+
+        Box range = sp.getBoundingBox().expand(killAuraRange);
+        LivingEntity target = null;
+        double bestDistSq = Double.MAX_VALUE;
+
+        for (LivingEntity entity : sp.getWorld().getEntitiesByClass(LivingEntity.class, range,
+                e -> e != sp && e.isAlive() && !(e instanceof PlayerEntity) && !(e instanceof ArmorStandEntity))) {
+            double distSq = sp.squaredDistanceTo(entity);
+            if (distSq < bestDistSq) {
+                bestDistSq = distSq;
+                target = entity;
+            }
+        }
+
+        if (target != null) sp.attack(target);
+    }
+
+    /**
+     * Reduziert erlittenen Rueckstoss ueber das vanilla Attribut knockback_resistance.
+     * Achtung: Dieses Attribut unterscheidet nicht zwischen Angreifer-Typen -- es
+     * reduziert Rueckstoss durch Mobs UND durch andere Spieler gleichermassen, das
+     * laesst sich ohne tiefere Netzwerk-Hooks nicht sauber trennen.
+     */
+    private void applyAntiKnockback(ServerPlayerEntity sp) {
+        EntityAttributeInstance attr = sp.getAttributeInstance(EntityAttributes.KNOCKBACK_RESISTANCE);
+        if (attr == null) return;
+        attr.removeModifier(KNOCKBACK_MOD_ID);
+        if (antiKnockback) {
+            attr.addPersistentModifier(new EntityAttributeModifier(
+                    KNOCKBACK_MOD_ID, 0.95, EntityAttributeModifier.Operation.ADD_VALUE));
+        }
+    }
+
+    /**
      * Scannt geladene Chunks im Umkreis periodisch (nicht jeden Tick, aus Performance-
      * Gruenden) nach Erzen (Xray) und Containern (Storage-ESP) und puffert die Treffer
      * fuer die Render-Klassen.
@@ -535,9 +588,12 @@ public class CheatManager {
         map.put("autoTotem", autoTotem);
         map.put("autoEat", autoEat);
         map.put("autoArmor", autoArmor);
+        map.put("killAura", killAura);
+        map.put("antiKnockback", antiKnockback);
         map.put("speed", speedMultiplier);
         map.put("jumpBoost", jumpMultiplier);
         map.put("fastBreak", fastBreakMultiplier);
+        map.put("killAuraRange", killAuraRange);
         return map;
     }
 }

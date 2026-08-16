@@ -87,11 +87,24 @@ für das genaue JSON-Nachrichtenformat zwischen App und Mod.
 | `autoTotem` | toggle | Legt automatisch ein Totem ins Offhand |
 | `autoEat` | toggle | Isst automatisch, wenn der Hunger sinkt |
 | `autoArmor` | toggle | Rüstet automatisch die beste verfügbare Rüstung aus |
+| `killAura` | toggle | Greift automatisch nahe Mobs/Tiere an – **schließt Spieler hart aus** (Filter im Code, kein Konfigurationsschalter) |
+| `killAuraRange` | slider (2-8) | Reichweite der Kill Aura in Blöcken |
+| `antiKnockback` | toggle | Reduziert Rückstoß via `knockback_resistance`-Attribut stark |
 
-Bewusst **nicht** übernommen aus Vorbildern wie Meteor Client: alles, was primär auf
-Multiplayer-Server/andere Spieler zielt oder Anti-Cheat umgeht (Kill Aura gegen Spieler,
-Anti Knockback, Blink, Packet Canceler, Notebot-Spam, Nametag-Spoofing, ...). Das passt
-nicht zum "nur eigene Singleplayer-Welt"-Konzept von CheatHub.
+**Wichtiger Vorbehalt zu `antiKnockback`:** Minecraft unterscheidet bei diesem Attribut
+nicht zwischen Angreifer-Typen. Es reduziert Rückstoß durch Mobs *und* durch andere
+Spieler gleichermaßen – das lässt sich ohne deutlich tiefere Netzwerk-Hooks nicht sauber
+trennen. `killAura` dagegen greift nie Spieler an, das ist ein harter Code-Filter
+(`!(e instanceof PlayerEntity)`), keine Einstellung.
+
+Bewusst **nicht** übernommen aus Vorbildern wie Meteor Client: alles, was auf echte
+Mitspieler zielt oder Anti-Cheat umgeht (automatisches Anvisieren/Angreifen von Spielern,
+Blink, Packet Canceler, Notebot-Spam, Nametag-Spoofing, ...). Auch mit "nur für Freunde"
+lässt sich ein automatisierter Angriff auf echte Spieler nicht sauber auf Einverständnis
+beschränken, deshalb bleibt das außen vor. Alle Cheats bleiben zudem an "du bist Host
+deiner Welt" gebunden (Singleplayer/LAN) – sie wirken nicht als Client-Hack auf fremden
+Servern oder auf die Charaktere deiner Freunde, wenn die den Mod nicht selbst installiert
+haben.
 
 ## Neues Spiel für CheatHub bauen (später)
 
