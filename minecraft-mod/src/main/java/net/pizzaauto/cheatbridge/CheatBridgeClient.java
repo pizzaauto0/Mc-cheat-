@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.pizzaauto.cheatbridge.net.BridgeServer;
+import net.pizzaauto.cheatbridge.render.BlockEspRenderer;
 import net.pizzaauto.cheatbridge.render.EspRenderer;
 import net.pizzaauto.cheatbridge.render.TracerRenderer;
 import net.pizzaauto.cheatbridge.render.WaypointRenderer;
@@ -54,6 +55,8 @@ public class CheatBridgeClient implements ClientModInitializer {
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             if (CHEATS.esp) EspRenderer.render(context, CHEATS);
             if (CHEATS.tracers) TracerRenderer.render(context, CHEATS);
+            if (CHEATS.xray) BlockEspRenderer.render(context, CHEATS.oreEspPositions, 0.4f, 0.9f, 1.0f, 0.85f);
+            if (CHEATS.storageEsp) BlockEspRenderer.render(context, CHEATS.storageEspPositions, 0.2f, 1.0f, 0.4f, 0.85f);
         });
 
         WorldRenderEvents.LAST.register(context -> {

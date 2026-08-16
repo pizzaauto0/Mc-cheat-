@@ -30,10 +30,19 @@ der Build mit "Dependency not found" o.ä. fehlschlägt – dann einfach die Ver
 
 Da 1.21.11 eine sehr aktuelle Version ist, wurde dieser Code nicht in einer echten
 Gradle/Minecraft-Toolchain kompiliert (dafür fehlen hier die Minecraft-Bibliotheken).
-Der wahrscheinlichste Punkt für kleine Anpassungen nach dem ersten Build ist die
-Render-Pipeline für ESP/Tracer/Waypoints (`render/RenderLayers.java`), da Mojang die
-Rendering-API zwischen 1.21.x-Versionen mehrfach angepasst hat. Alles andere
-(Cheat-Logik, WebSocket-Server) nutzt seit langem stabile, gut dokumentierte APIs.
+Wahrscheinlichste Punkte für kleine Anpassungen nach dem ersten Build:
+
+- **Render-Pipeline** für ESP/Tracer/Xray/Storage-ESP/Waypoints (`render/RenderLayers.java`),
+  da Mojang die Rendering-API zwischen 1.21.x-Versionen mehrfach angepasst hat.
+- **`EntityAttributes.STEP_HEIGHT`** (Step-Cheat) – der Attributname für die Stufenhöhe
+  kann sich zwischen Mapping-Versionen leicht unterscheiden.
+- **`FoodComponent#nutrition()/saturation()`** (Auto-Eat) – die Nahrungsmittel-API wurde
+  in 1.20.5+ auf Data Components umgestellt, Methodennamen können variieren.
+- **`ArmorItem#getSlotType()`** (Auto-Armor) – Mojang hat das Rüstungs-/Ausrüstungssystem
+  ("Equipment Assets") in 1.21.x umgebaut, hier ist am ehesten eine kleine Anpassung nötig.
+
+Alles andere (Cheat-Logik, WebSocket-Server, Attribute wie Speed/Fastbreak) nutzt seit
+langem stabile, gut dokumentierte APIs.
 
 ## Installation
 
@@ -69,6 +78,20 @@ für das genaue JSON-Nachrichtenformat zwischen App und Mod.
 | `weatherClear` | toggle | Erzwingt klares Wetter |
 | `heal` | action | Leben sofort auffüllen |
 | `feed` | action | Hunger sofort auffüllen |
+| `jesus` | toggle | Wasserlaufen statt sinken (vereinfachte Näherung) |
+| `spider` | toggle | Wände hochklettern beim Hineinlaufen |
+| `step` | toggle | Volle Blöcke ohne Springen hochsteigen |
+| `xray` | toggle | Markiert Erze (Diamant, Smaragd, Gold, Antiker Schrott, Redstone, Lapis) durch Wände |
+| `storageEsp` | toggle | Markiert Truhen/Fässer/Öfen/Shulker-Boxen durch Wände |
+| `nuker` | toggle | Baut abbaubare Blöcke im 3-Block-Radius automatisch ab |
+| `autoTotem` | toggle | Legt automatisch ein Totem ins Offhand |
+| `autoEat` | toggle | Isst automatisch, wenn der Hunger sinkt |
+| `autoArmor` | toggle | Rüstet automatisch die beste verfügbare Rüstung aus |
+
+Bewusst **nicht** übernommen aus Vorbildern wie Meteor Client: alles, was primär auf
+Multiplayer-Server/andere Spieler zielt oder Anti-Cheat umgeht (Kill Aura gegen Spieler,
+Anti Knockback, Blink, Packet Canceler, Notebot-Spam, Nametag-Spoofing, ...). Das passt
+nicht zum "nur eigene Singleplayer-Welt"-Konzept von CheatHub.
 
 ## Neues Spiel für CheatHub bauen (später)
 

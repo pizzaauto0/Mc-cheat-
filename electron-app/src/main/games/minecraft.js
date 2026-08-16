@@ -26,7 +26,10 @@ const CHEAT_CATALOG = [
         description: 'Erhoehte Sprungkraft.',
         min: 1, max: 5, step: 0.5, default: 2
       },
-      { id: 'noFallDamage', label: 'Kein Fallschaden', type: 'toggle', description: 'Verhindert Fallschaden komplett.' }
+      { id: 'noFallDamage', label: 'Kein Fallschaden', type: 'toggle', description: 'Verhindert Fallschaden komplett.' },
+      { id: 'jesus', label: 'Jesus (Wasserlaufen)', type: 'toggle', description: 'Laufe auf der Wasseroberflaeche statt zu sinken.' },
+      { id: 'spider', label: 'Spider (Wandklettern)', type: 'toggle', description: 'Klettere Waende hoch, indem du dich hineinbewegst.' },
+      { id: 'step', label: 'Step (volle Bloecke)', type: 'toggle', description: 'Steige ohne Sprung auf ganze Blockstufen (1 Block Stufenhoehe).' }
     ]
   },
   {
@@ -36,7 +39,9 @@ const CHEAT_CATALOG = [
       { id: 'fullbright', label: 'Fullbright', type: 'toggle', description: 'Client-seitig maximale Helligkeit, auch in dunklen Hoehlen.' },
       { id: 'esp', label: 'ESP (Entity-Vision)', type: 'toggle', description: 'Zeigt Umrisse von Spielern/Mobs durch Waende.' },
       { id: 'tracers', label: 'Tracer-Linien', type: 'toggle', description: 'Linien vom Bildschirmzentrum zu nahen Entities.' },
-      { id: 'waypoints', label: 'Waypoints', type: 'toggle', description: 'Zeigt gesetzte Wegpunkte als Marker in der Welt.' }
+      { id: 'waypoints', label: 'Waypoints', type: 'toggle', description: 'Zeigt gesetzte Wegpunkte als Marker in der Welt.' },
+      { id: 'xray', label: 'Xray (Erz-ESP)', type: 'toggle', description: 'Markiert wertvolle Erze (Diamant, Smaragd, Gold, Antiker Schrott, ...) durch Waende.' },
+      { id: 'storageEsp', label: 'Storage-ESP', type: 'toggle', description: 'Markiert Truhen, Fässer, Öfen und Shulker-Boxen durch Waende.' }
     ]
   },
   {
@@ -52,7 +57,16 @@ const CHEAT_CATALOG = [
       { id: 'keepInventory', label: 'Inventar bei Tod behalten', type: 'toggle', description: 'Setzt die Gamerule keepInventory.' },
       { id: 'freezeMobs', label: 'Mobs einfrieren', type: 'toggle', description: 'Deaktiviert die KI nahegelegener Mobs (keine Angriffe/Bewegung).' },
       { id: 'timeLockDay', label: 'Immer Tag', type: 'toggle', description: 'Hindert die Uhrzeit am Weiterlaufen (Dauer-Tag).' },
-      { id: 'weatherClear', label: 'Klares Wetter erzwingen', type: 'toggle', description: 'Beendet/verhindert Regen und Gewitter.' }
+      { id: 'weatherClear', label: 'Klares Wetter erzwingen', type: 'toggle', description: 'Beendet/verhindert Regen und Gewitter.' },
+      { id: 'nuker', label: 'Nuker', type: 'toggle', description: 'Baut automatisch alle abbaubaren Bloecke in einem kleinen Radius um dich ab.' }
+    ]
+  },
+  {
+    category: 'Automatisierung',
+    cheats: [
+      { id: 'autoTotem', label: 'Auto-Totem', type: 'toggle', description: 'Legt automatisch ein Totem der Unsterblichkeit ins Offhand, sobald verfuegbar.' },
+      { id: 'autoEat', label: 'Auto-Eat', type: 'toggle', description: 'Isst automatisch Nahrung aus dem Inventar, wenn der Hunger sinkt.' },
+      { id: 'autoArmor', label: 'Auto-Armor', type: 'toggle', description: 'Ruestet automatisch die beste verfuegbare Ruestung aus dem Inventar aus.' }
     ]
   },
   {
