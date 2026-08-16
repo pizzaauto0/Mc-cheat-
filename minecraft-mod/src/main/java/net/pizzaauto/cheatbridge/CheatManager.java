@@ -1,6 +1,8 @@
 package net.pizzaauto.cheatbridge;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BarrelBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
@@ -27,7 +29,9 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
@@ -35,7 +39,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.chunk.WorldChunk;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +65,7 @@ public class CheatManager {
     private static final Identifier BREAK_MOD_ID = Identifier.of(CheatBridgeClient.MOD_ID, "fast_break");
     private static final Identifier STEP_MOD_ID = Identifier.of(CheatBridgeClient.MOD_ID, "step_height");
     private static final Identifier KNOCKBACK_MOD_ID = Identifier.of(CheatBridgeClient.MOD_ID, "anti_knockback");
+    private static final int VEIN_MINER_MAX_BLOCKS = 64;
 
     private static final int WORLD_SCAN_INTERVAL_TICKS = 40; // ~2s
     private static final int WORLD_SCAN_RADIUS_CHUNKS = 3;
@@ -98,12 +106,16 @@ public class CheatManager {
     public boolean autoArmor = false;
     public boolean killAura = false;
     public boolean antiKnockback = false;
+    public boolean noclip = false;
+    public boolean fastClimb = false;
+    public boolean mobHealthTags = false;
 
     // --- Parameter (Slider) ---
     public double speedMultiplier = 2.0;
     public double jumpMultiplier = 2.0;
     public double fastBreakMultiplier = 4.0;
     public double killAuraRange = 4.0;
+    public double gameSpeed = 1.0;
 
     public final List<Waypoint> waypoints = new ArrayList<>();
 
@@ -113,6 +125,7 @@ public class CheatManager {
 
     private int tickCounter = 0;
     private boolean freezeMobsWasEnabled = false;
+    private boolean mobHealthTagsWasEnabled = false;
     private Float previousGamma = null;
 
     // Netzwerk-Nachrichten kommen vom WebSocket-Thread, nicht vom Client-Tick-Thread.
@@ -145,6 +158,9 @@ public class CheatManager {
                 case "autoArmor" -> autoArmor = enabled;
                 case "killAura" -> killAura = enabled;
                 case "antiKnockback" -> antiKnockback = enabled;
+                case "noclip" -> noclip = enabled;
+                case "fastClimb" -> fastClimb = enabled;
+                case "mobHealthTags" -> mobHealthTags = enabled;
                 default -> { /* unbekannte Id ignorieren */ }
             }
         });
@@ -158,6 +174,7 @@ public class CheatManager {
                 case "jumpBoost" -> jumpMultiplier = value;
                 case "fastBreak" -> fastBreakMultiplier = value;
                 case "killAuraRange" -> killAuraRange = value;
+                case "gameSpeed" -> gameSpeed = value;
                 default -> { /* unbekannte Id ignorieren */ }
             }
         });
@@ -175,6 +192,7 @@ public class CheatManager {
                     sp.getHungerManager().setFoodLevel(20);
                     sp.getHungerManager().setSaturationLevel(20.0f);
                 }
+                case "veinMiner" -> runVeinMiner(sp, client);
                 default -> { /* unbekannte Aktion ignorieren */ }
             }
         });
@@ -223,6 +241,10 @@ public class CheatManager {
         applyAutoArmor(sp);
         applyKillAura(sp);
         applyAntiKnockback(sp);
+        applyNoclip(sp);
+        applyFastClimb(sp);
+        applyGameSpeed(sp.getServer());
+        applyMobHealthTags(sp);
 
         if (tickCounter % WORLD_SCAN_INTERVAL_TICKS == 0) {
             scanWorld(sp);
@@ -506,6 +528,85 @@ public class CheatManager {
         }
     }
 
+    /** Deaktiviert Kollisionspruefung fuer den Spieler; am sinnvollsten zusammen mit Fly. */
+    private void applyNoclip(ServerPlayerEntity sp) {
+        sp.noClip = noclip;
+    }
+
+    /** Beschleunigt das Klettern an Leitern/Ranken. */
+    private void applyFastClimb(ServerPlayerEntity sp) {
+        if (!fastClimb || !sp.isClimbing()) return;
+        Vec3d v = sp.getVelocity();
+        sp.setVelocity(v.x, 0.4, v.z);
+    }
+
+    /**
+     * Aendert die Welt-Tickrate ueber den vanilla ServerTickManager (seit 1.20.2 als
+     * Basis fuer den "/tick rate"-Befehl vorhanden) -- beschleunigt/verlangsamt damit
+     * den kompletten Weltablauf, nicht nur die Spielerbewegung.
+     */
+    private void applyGameSpeed(MinecraftServer server) {
+        server.getTickManager().setTickRate((float) (20.0 * gameSpeed));
+    }
+
+    /**
+     * Baut die zusammenhaengende Blockader vom anvisierten Block aus ab (Flood-Fill,
+     * auf {@link #VEIN_MINER_MAX_BLOCKS} begrenzt, um die Welt nicht zu fluten).
+     */
+    private void runVeinMiner(ServerPlayerEntity sp, MinecraftClient client) {
+        if (!(client.crosshairTarget instanceof BlockHitResult hit)) return;
+
+        ServerWorld world = sp.getServerWorld();
+        BlockPos origin = hit.getBlockPos().toImmutable();
+        Block targetBlock = world.getBlockState(origin).getBlock();
+        if (targetBlock == Blocks.AIR) return;
+
+        Deque<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        queue.add(origin);
+        visited.add(origin);
+        int broken = 0;
+
+        while (!queue.isEmpty() && broken < VEIN_MINER_MAX_BLOCKS) {
+            BlockPos pos = queue.poll();
+            if (world.getBlockState(pos).getBlock() != targetBlock) continue;
+
+            world.breakBlock(pos, true, sp);
+            broken++;
+
+            for (BlockPos neighbor : BlockPos.iterate(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+                BlockPos immutable = neighbor.toImmutable();
+                if (visited.contains(immutable)) continue;
+                visited.add(immutable);
+                if (world.getBlockState(immutable).getBlock() == targetBlock) queue.add(immutable);
+            }
+        }
+    }
+
+    /**
+     * Zeigt aktuelles/maximales Leben als Namensschild ueber nahen Mobs/Tieren, indem
+     * der (vanilla) Custom-Name-Mechanismus wiederverwendet wird -- kein eigenes
+     * Text-Rendering noetig, dadurch deutlich geringeres API-Risiko.
+     */
+    private void applyMobHealthTags(ServerPlayerEntity sp) {
+        if (!mobHealthTags && !mobHealthTagsWasEnabled) return;
+
+        Box range = sp.getBoundingBox().expand(32.0);
+        List<LivingEntity> nearby = sp.getWorld().getEntitiesByClass(LivingEntity.class, range,
+                e -> e != sp && !(e instanceof PlayerEntity));
+
+        for (LivingEntity entity : nearby) {
+            if (mobHealthTags) {
+                entity.setCustomName(Text.literal(String.format("%.1f / %.1f", entity.getHealth(), entity.getMaxHealth())));
+                entity.setCustomNameVisible(true);
+            } else {
+                entity.setCustomName(null);
+                entity.setCustomNameVisible(false);
+            }
+        }
+        mobHealthTagsWasEnabled = mobHealthTags;
+    }
+
     /**
      * Scannt geladene Chunks im Umkreis periodisch (nicht jeden Tick, aus Performance-
      * Gruenden) nach Erzen (Xray) und Containern (Storage-ESP) und puffert die Treffer
@@ -590,10 +691,14 @@ public class CheatManager {
         map.put("autoArmor", autoArmor);
         map.put("killAura", killAura);
         map.put("antiKnockback", antiKnockback);
+        map.put("noclip", noclip);
+        map.put("fastClimb", fastClimb);
+        map.put("mobHealthTags", mobHealthTags);
         map.put("speed", speedMultiplier);
         map.put("jumpBoost", jumpMultiplier);
         map.put("fastBreak", fastBreakMultiplier);
         map.put("killAuraRange", killAuraRange);
+        map.put("gameSpeed", gameSpeed);
         return map;
     }
 }

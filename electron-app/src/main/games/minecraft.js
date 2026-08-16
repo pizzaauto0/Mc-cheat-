@@ -29,7 +29,9 @@ const CHEAT_CATALOG = [
       { id: 'noFallDamage', label: 'Kein Fallschaden', type: 'toggle', description: 'Verhindert Fallschaden komplett.' },
       { id: 'jesus', label: 'Jesus (Wasserlaufen)', type: 'toggle', description: 'Laufe auf der Wasseroberflaeche statt zu sinken.' },
       { id: 'spider', label: 'Spider (Wandklettern)', type: 'toggle', description: 'Klettere Waende hoch, indem du dich hineinbewegst.' },
-      { id: 'step', label: 'Step (volle Bloecke)', type: 'toggle', description: 'Steige ohne Sprung auf ganze Blockstufen (1 Block Stufenhoehe).' }
+      { id: 'step', label: 'Step (volle Bloecke)', type: 'toggle', description: 'Steige ohne Sprung auf ganze Blockstufen (1 Block Stufenhoehe).' },
+      { id: 'noclip', label: 'Noclip / Phase', type: 'toggle', description: 'Bewege dich durch Bloecke hindurch. Am besten zusammen mit Fliegen nutzen.' },
+      { id: 'fastClimb', label: 'Fast-Climb', type: 'toggle', description: 'Schnelleres Hoch-/Runterklettern an Leitern und Ranken.' }
     ]
   },
   {
@@ -41,7 +43,8 @@ const CHEAT_CATALOG = [
       { id: 'tracers', label: 'Tracer-Linien', type: 'toggle', description: 'Linien vom Bildschirmzentrum zu nahen Entities.' },
       { id: 'waypoints', label: 'Waypoints', type: 'toggle', description: 'Zeigt gesetzte Wegpunkte als Marker in der Welt.' },
       { id: 'xray', label: 'Xray (Erz-ESP)', type: 'toggle', description: 'Markiert wertvolle Erze (Diamant, Smaragd, Gold, Antiker Schrott, ...) durch Waende.' },
-      { id: 'storageEsp', label: 'Storage-ESP', type: 'toggle', description: 'Markiert Truhen, Fässer, Öfen und Shulker-Boxen durch Waende.' }
+      { id: 'storageEsp', label: 'Storage-ESP', type: 'toggle', description: 'Markiert Truhen, Fässer, Öfen und Shulker-Boxen durch Waende.' },
+      { id: 'mobHealthTags', label: 'Mob-Health-Tags', type: 'toggle', description: 'Zeigt Leben (aktuell/max) als Namensschild ueber nahen Mobs/Tieren.' }
     ]
   },
   {
@@ -58,7 +61,15 @@ const CHEAT_CATALOG = [
       { id: 'freezeMobs', label: 'Mobs einfrieren', type: 'toggle', description: 'Deaktiviert die KI nahegelegener Mobs (keine Angriffe/Bewegung).' },
       { id: 'timeLockDay', label: 'Immer Tag', type: 'toggle', description: 'Hindert die Uhrzeit am Weiterlaufen (Dauer-Tag).' },
       { id: 'weatherClear', label: 'Klares Wetter erzwingen', type: 'toggle', description: 'Beendet/verhindert Regen und Gewitter.' },
-      { id: 'nuker', label: 'Nuker', type: 'toggle', description: 'Baut automatisch alle abbaubaren Bloecke in einem kleinen Radius um dich ab.' }
+      { id: 'nuker', label: 'Nuker', type: 'toggle', description: 'Baut automatisch alle abbaubaren Bloecke in einem kleinen Radius um dich ab.' },
+      {
+        id: 'gameSpeed',
+        label: 'Game-Speed (Timer)',
+        type: 'slider',
+        description: 'Beschleunigt/verlangsamt den Weltablauf (Tickrate) ueber den vanilla Tick-Manager.',
+        min: 0.25, max: 4, step: 0.25, default: 1
+      },
+      { id: 'veinMiner', label: 'Vein-Miner', type: 'action', description: 'Baut die zusammenhaengende Blockader unter dem Fadenkreuz komplett ab (max. 64 Bloecke).' }
     ]
   },
   {

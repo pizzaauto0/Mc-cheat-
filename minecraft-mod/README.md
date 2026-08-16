@@ -40,6 +40,8 @@ Wahrscheinlichste Punkte für kleine Anpassungen nach dem ersten Build:
   in 1.20.5+ auf Data Components umgestellt, Methodennamen können variieren.
 - **`ArmorItem#getSlotType()`** (Auto-Armor) – Mojang hat das Rüstungs-/Ausrüstungssystem
   ("Equipment Assets") in 1.21.x umgebaut, hier ist am ehesten eine kleine Anpassung nötig.
+- **`MinecraftServer#getTickManager()#setTickRate()`** (Game-Speed/Timer) – existiert seit
+  1.20.2 als Basis für den vanilla `/tick rate`-Befehl, Methodenname kann leicht variieren.
 
 Alles andere (Cheat-Logik, WebSocket-Server, Attribute wie Speed/Fastbreak) nutzt seit
 langem stabile, gut dokumentierte APIs.
@@ -90,6 +92,11 @@ für das genaue JSON-Nachrichtenformat zwischen App und Mod.
 | `killAura` | toggle | Greift automatisch nahe Mobs/Tiere an – **schließt Spieler hart aus** (Filter im Code, kein Konfigurationsschalter) |
 | `killAuraRange` | slider (2-8) | Reichweite der Kill Aura in Blöcken |
 | `antiKnockback` | toggle | Reduziert Rückstoß via `knockback_resistance`-Attribut stark |
+| `noclip` | toggle | Keine Kollision mit Blöcken (am besten mit `fly` kombinieren) |
+| `fastClimb` | toggle | Schnelleres Klettern an Leitern/Ranken |
+| `mobHealthTags` | toggle | Zeigt Leben (aktuell/max) als Namensschild über nahen Mobs/Tieren |
+| `gameSpeed` | slider (0.25-4x) | Welt-Tickrate über den vanilla Tick-Manager (Timer) |
+| `veinMiner` | action | Baut die zusammenhängende Blockader unter dem Fadenkreuz ab (max. 64 Blöcke) |
 
 **Wichtiger Vorbehalt zu `antiKnockback`:** Minecraft unterscheidet bei diesem Attribut
 nicht zwischen Angreifer-Typen. Es reduziert Rückstoß durch Mobs *und* durch andere
