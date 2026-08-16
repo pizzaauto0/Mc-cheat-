@@ -1,0 +1,15 @@
+# Electron app
+electron-app/node_modules/
+electron-app/dist/
+
+# Minecraft mod / Gradle
+minecraft-mod/.gradle/
+minecraft-mod/build/
+minecraft-mod/out/
+minecraft-mod/run/
+minecraft-mod/.idea/
+minecraft-mod/*.iml
+
+# OS
+.DS_Store
+Thumbs.db

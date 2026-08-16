@@ -1,0 +1,53 @@
+plugins {
+    id 'fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+}
+
+loom {
+    // 1.21.11 ist eine der letzten obfuskierten Versionen -- offizielle Mojang-Mappings
+    // sind fuer neue Versionen der empfohlene Weg (siehe Fabric-Blog zu 1.21.11).
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // Leichtgewichtiger lokaler WebSocket-Server fuer die Kommunikation mit der
+    // Electron-App. Wird per Jar-in-Jar mit ausgeliefert (include), damit Nutzer
+    // keine separate Bibliothek installieren muessen.
+    implementation "org.java-websocket:Java-WebSocket:${project.java_websocket_version}"
+    include "org.java-websocket:Java-WebSocket:${project.java_websocket_version}"
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filteringCharset 'UTF-8'
+
+    filesMatching('fabric.mod.json') {
+        expand version: project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}

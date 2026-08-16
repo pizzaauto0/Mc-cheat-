@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" />
+  <title>CheatHub</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">CH</div>
+        <div class="brand-text">
+          <div class="brand-title">CheatHub</div>
+          <div class="brand-subtitle">Trainer fuer Singleplayer-Spiele</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section-label">Bibliothek</div>
+      <div id="game-list" class="game-list"></div>
+
+      <div class="sidebar-footer">
+        <button id="add-game-btn" class="add-game-btn" disabled title="Weitere Spiele folgen">+ Spiel hinzufuegen</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div id="empty-state" class="empty-state">
+        <h1>Waehle ein Spiel</h1>
+        <p>Sobald ein unterstuetztes Spiel laeuft, erkennt CheatHub es automatisch.</p>
+      </div>
+
+      <div id="game-panel" class="game-panel hidden">
+        <header class="panel-header">
+          <div>
+            <h1 id="panel-title">Minecraft: Java Edition</h1>
+            <div id="panel-subtitle" class="panel-subtitle">1.21.11 · Singleplayer</div>
+          </div>
+          <div id="status-badge" class="status-badge status-offline">
+            <span class="status-dot"></span>
+            <span id="status-text">Nicht erkannt</span>
+          </div>
+        </header>
+
+        <div id="hint-banner" class="hint-banner hidden"></div>
+
+        <div id="cheat-categories" class="cheat-categories"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

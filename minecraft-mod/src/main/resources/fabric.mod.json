@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "cheatbridge",
+  "version": "${version}",
+  "name": "CheatBridge",
+  "description": "Startet einen lokalen WebSocket-Server, ueber den die CheatHub-Desktop-App Singleplayer-Cheats in Minecraft steuern kann.",
+  "authors": ["CheatHub"],
+  "contact": {},
+  "license": "MIT",
+  "icon": null,
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.pizzaauto.cheatbridge.CheatBridgeClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

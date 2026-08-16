@@ -1,0 +1,31 @@
+{
+  "name": "cheathub",
+  "productName": "CheatHub",
+  "version": "0.1.0",
+  "description": "Ein WeMod-artiger Trainer-Hub fuer Singleplayer-Spiele. Start: Minecraft Java 1.21.11.",
+  "main": "src/main/index.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "ps-list": "^8.1.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.cheathub.app",
+    "productName": "CheatHub",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
