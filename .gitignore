@@ -13,3 +13,10 @@ minecraft-mod/*.iml
 # OS
 .DS_Store
 Thumbs.db
+
+# Python (gta6-dev-launcher-demo)
+__pycache__/
+*.pyc
+gta6-dev-launcher-demo/build/
+gta6-dev-launcher-demo/dist/
+gta6-dev-launcher-demo/*.spec

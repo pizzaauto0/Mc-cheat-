@@ -217,19 +217,14 @@
   .tile .bg{
     position:absolute; inset:0; z-index:1;
     filter: saturate(1.15) contrast(1.05);
+    overflow:hidden;
   }
-  .tile.new .bg{ background:
-    radial-gradient(70% 60% at 75% 15%, rgba(255,214,150,.5), transparent 60%),
-    linear-gradient(160deg,#5a3416,#a85a1c 55%,#d98a2e); }
-  .tile.cont .bg{ background:
-    radial-gradient(60% 50% at 80% 10%, rgba(150,220,255,.4), transparent 60%),
-    linear-gradient(160deg,#071726,#0f3348 55%,#175a75); }
-  .tile.coll .bg{ background:
-    radial-gradient(60% 50% at 75% 10%, rgba(190,255,170,.35), transparent 60%),
-    linear-gradient(160deg,#0a2010,#173d18 55%,#316b24); }
-  .tile.prog .bg{ background:
-    radial-gradient(60% 50% at 75% 10%, rgba(255,170,190,.3), transparent 60%),
-    linear-gradient(160deg,#1a0c10,#3d1019 55%,#63182a); }
+  .tile .bg svg{
+    position:absolute; inset:0; width:100%; height:100%;
+    transform: scale(1.06);
+    transition: transform 6s ease;
+  }
+  .tile:hover .bg svg{ transform: scale(1.14); }
   .tile .bg::before{
     content:""; position:absolute; inset:0; z-index:2;
     background: radial-gradient(120% 90% at 50% 100%, rgba(0,0,0,.75), transparent 55%),
@@ -342,10 +337,135 @@
       </svg>
     </div>
     <div class="menu-grid">
-      <div class="tile new selected"><div class="bg"></div><div class="label">NEW GAME</div></div>
-      <div class="tile cont"><div class="bg"></div><div class="label">CONTINUE</div></div>
-      <div class="tile coll"><div class="bg"></div><div class="label">COLLECTIBLES</div></div>
-      <div class="tile prog"><div class="bg"></div><div class="label">PROGRESS</div></div>
+      <div class="tile new selected">
+        <div class="bg">
+          <svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax slice">
+            <defs>
+              <linearGradient id="skyNew" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2a1440"/>
+                <stop offset="42%" stop-color="#c2453d"/>
+                <stop offset="72%" stop-color="#f0a53f"/>
+                <stop offset="100%" stop-color="#7a4a24"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="400" fill="url(#skyNew)"/>
+            <circle cx="230" cy="205" r="62" fill="#ffe3ab" opacity="0.9"/>
+            <g fill="#180d08" opacity="0.92">
+              <rect x="0" y="300" width="50" height="60"/>
+              <rect x="46" y="270" width="34" height="90"/>
+              <rect x="82" y="290" width="26" height="70"/>
+              <rect x="112" y="255" width="40" height="105"/>
+              <rect x="300" y="280" width="30" height="80"/>
+              <rect x="332" y="240" width="46" height="120"/>
+              <rect x="380" y="295" width="20" height="65"/>
+            </g>
+            <g fill="#150b06" opacity="0.95">
+              <path d="M55 360 L60 230 L64 230 L68 360 Z"/>
+              <path d="M62 235 Q30 210 40 180 Q62 195 64 220 Z"/>
+              <path d="M62 235 Q95 205 88 175 Q64 192 62 220 Z"/>
+              <path d="M62 232 Q45 195 60 165 Q72 198 66 224 Z"/>
+            </g>
+            <rect x="0" y="356" width="400" height="44" fill="#0e0704"/>
+          </svg>
+        </div>
+        <div class="label">NEW GAME</div>
+      </div>
+      <div class="tile cont">
+        <div class="bg">
+          <svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMax slice">
+            <defs>
+              <linearGradient id="skyCont" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#050912"/>
+                <stop offset="55%" stop-color="#0b2436"/>
+                <stop offset="100%" stop-color="#123449"/>
+              </linearGradient>
+              <radialGradient id="glowCont" cx="50%" cy="35%" r="55%">
+                <stop offset="0%" stop-color="#ffd76a" stop-opacity="0.55"/>
+                <stop offset="100%" stop-color="#ffd76a" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="400" fill="url(#skyCont)"/>
+            <rect width="400" height="400" fill="url(#glowCont)"/>
+            <g stroke="#e9f4ff" stroke-opacity="0.12" stroke-width="2">
+              <path d="M0 400 L180 240"/>
+              <path d="M400 400 L220 240"/>
+              <path d="M60 400 L190 240"/>
+              <path d="M340 400 L210 240"/>
+            </g>
+            <rect x="150" y="120" width="100" height="46" rx="6" fill="none" stroke="#ffb23e" stroke-width="4"/>
+            <text x="200" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-weight="800" font-size="20" fill="#ffcf6e" letter-spacing="2">MOTEL</text>
+            <rect x="150" y="120" width="100" height="46" rx="6" fill="none" stroke="#ffcf6e" stroke-width="1" opacity="0.7"/>
+            <g fill="#050a10">
+              <rect x="20" y="260" width="360" height="140"/>
+              <rect x="40" y="200" width="60" height="60"/>
+              <rect x="300" y="210" width="70" height="50"/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">CONTINUE</div>
+      </div>
+      <div class="tile coll">
+        <div class="bg">
+          <svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <linearGradient id="skyColl" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#0a2410"/>
+                <stop offset="55%" stop-color="#1c4a1e"/>
+                <stop offset="100%" stop-color="#2f6a26"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="400" fill="url(#skyColl)"/>
+            <path d="M-20 120 C 80 90, 140 170, 230 140 C 300 118, 340 180, 430 150 L430 260 C 340 300, 300 230, 230 255 C 140 285, 80 210, -20 240 Z"
+                  fill="#3f7abf" opacity="0.55"/>
+            <g fill="#0c1f0c" opacity="0.85">
+              <circle cx="60" cy="80" r="22"/>
+              <circle cx="100" cy="60" r="16"/>
+              <circle cx="320" cy="90" r="20"/>
+              <circle cx="360" cy="130" r="26"/>
+              <circle cx="70" cy="320" r="24"/>
+              <circle cx="330" cy="330" r="30"/>
+            </g>
+            <g transform="translate(200,195) rotate(-8)">
+              <rect x="-26" y="-6" width="52" height="14" rx="4" fill="#12181c"/>
+              <polygon points="26,-6 40,1 26,8" fill="#12181c"/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">COLLECTIBLES</div>
+      </div>
+      <div class="tile prog">
+        <div class="bg">
+          <svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <radialGradient id="glowProg" cx="60%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#7a1f2b"/>
+                <stop offset="60%" stop-color="#3d1019"/>
+                <stop offset="100%" stop-color="#160709"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="400" fill="url(#glowProg)"/>
+            <g fill="#7a4a30">
+              <path d="M200 90 C 150 90, 120 140, 130 190 C 136 230, 160 250, 200 250 C 240 250, 264 230, 270 190 C 280 140, 250 90, 200 90 Z"/>
+            </g>
+            <g fill="#25120c" opacity="0.95">
+              <path d="M110 400 C 110 300, 150 255, 200 255 C 250 255, 290 300, 290 400 Z"/>
+            </g>
+            <g fill="#c0281f">
+              <rect x="118" y="152" width="164" height="18" rx="3"/>
+            </g>
+            <g fill="#141414">
+              <rect x="128" y="168" width="60" height="26" rx="8"/>
+              <rect x="212" y="168" width="60" height="26" rx="8"/>
+              <rect x="188" y="176" width="24" height="6" rx="3"/>
+            </g>
+            <g fill="#8a97a3" opacity="0.55">
+              <ellipse cx="148" cy="176" rx="10" ry="6"/>
+              <ellipse cx="232" cy="176" rx="10" ry="6"/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">PROGRESS</div>
+      </div>
     </div>
     <div class="menu-footer"><span>Social Club</span><span><b>A</b>Select</span><span><b>B</b>Back</span></div>
   </div>
