@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Development Build Launcher</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg: #0c0d10;
+    --panel: #17181c;
+    --panel-2: #1e2025;
+    --border: #2c2e34;
+    --text: #d7d8dc;
+    --text-dim: #8b8d94;
+    --accent: #eae7de;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:#000;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    color: var(--text);
+    overflow:hidden;
+  }
+  #stage{
+    position:relative;
+    width:100%; height:100vh;
+    background:#000;
+  }
+
+  /* ---------- shared window chrome ---------- */
+  .window{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none;
+    transition: opacity .6s ease;
+  }
+  .window.active{ opacity:1; pointer-events:auto; }
+
+  .titlebar{
+    height:26px; flex:0 0 auto;
+    background:#e9e9ea;
+    display:flex; align-items:center;
+    padding:0 10px;
+    gap:8px;
+  }
+  .titlebar .url{
+    height:12px; width:220px; border-radius:3px;
+    background:#c7c7ca;
+    filter: blur(1.5px);
+  }
+  .titlebar .dots{ display:flex; gap:5px; margin-left:auto; }
+  .titlebar .dots span{ width:9px; height:9px; border-radius:50%; background:#c7c7ca; display:block; }
+
+  /* ---------- LAUNCHER SCREEN ---------- */
+  #launcher{
+    background: linear-gradient(180deg, #0f1013 0%, #0b0c0e 100%);
+    color: var(--text);
+    font-family: 'Consolas','SFMono-Regular',Menlo,monospace;
+  }
+  .launcher-body{
+    flex:1; overflow:auto;
+    padding: 28px 40px 20px;
+    display:flex; flex-direction:column;
+    max-width: 720px;
+  }
+  .brand-row{ display:flex; align-items:center; gap:22px; margin-bottom:26px; }
+  .vi-logo{ width:64px; height:64px; flex:0 0 auto; }
+  .brand-text h1{
+    margin:0; font-size:26px; letter-spacing:1px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic; font-weight:700;
+    color:#f2f0e9;
+  }
+  .brand-text .sub{ color: var(--text-dim); font-size:12px; margin-top:4px; }
+  .brand-text .ver{ color: var(--text-dim); font-size:11px; margin-top:2px; }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom:16px;
+  }
+  .panel-title{
+    font-size:11px; letter-spacing:1.5px; color: var(--text-dim);
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    text-transform:uppercase;
+  }
+  .kv-grid{
+    display:grid; grid-template-columns: 110px 1fr; row-gap:10px;
+    padding:14px 16px; font-size:13px;
+  }
+  .kv-grid .k{ color: var(--text-dim); }
+  .kv-grid .v{ color: var(--accent); }
+
+  .config-body{ padding:14px 16px; display:flex; flex-direction:column; gap:12px; }
+  select.cfg{
+    background: var(--panel-2); color:var(--text);
+    border:1px solid var(--border); border-radius:3px;
+    padding:6px 10px; font-family:inherit; font-size:13px; width:220px;
+  }
+  .chk{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text); }
+  .chk input{ width:14px; height:14px; accent-color:#e9e6da; }
+
+  .launch-row{
+    display:flex; align-items:center; gap:16px; margin-bottom:16px;
+  }
+  #launchBtn{
+    background:#f0eee6; color:#111; border:none; border-radius:3px;
+    padding:12px 26px; font-weight:700; letter-spacing:1px;
+    font-family: 'Segoe UI', Arial, sans-serif; font-size:13px;
+    cursor:pointer;
+  }
+  #launchBtn:disabled{ opacity:.6; cursor:default; }
+  #launchBtn:hover:not(:disabled){ background:#fff; }
+  .status{ font-size:12px; color: var(--text-dim); }
+  .status b{ color: var(--accent); }
+
+  .console-panel{ flex:1; min-height:150px; display:flex; flex-direction:column; }
+  .console-log{
+    flex:1; padding:12px 16px; font-size:12px; line-height:1.7;
+    color:#9fd39a; overflow-y:auto;
+  }
+  .console-log .ts{ color:#6c7a86; margin-right:8px; }
+  .console-log .warn{ color:#d8b96a; }
+
+  /* ---------- TRANSITION ---------- */
+  #transition{
+    position:absolute; inset:0; background:#050208;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition: opacity .5s ease;
+    overflow:hidden;
+  }
+  #transition.active{ opacity:1; pointer-events:auto; }
+  .blob{
+    position:absolute; width:140vmax; height:140vmax;
+    background: conic-gradient(from 0deg,
+      #ffe066, #ff5f4d, #c026ff, #2b6bff, #1ad1ff, #ffe066);
+    filter: blur(40px) saturate(1.6);
+    animation: spin 6s linear infinite;
+    opacity:.95;
+    mix-blend-mode: screen;
+  }
+  .blob.b2{
+    width:100vmax; height:100vmax;
+    animation-duration: 4s; animation-direction: reverse;
+    filter: blur(60px) saturate(1.3) hue-rotate(40deg);
+    opacity:.7;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .transition-label{
+    position:relative; z-index:2; color:#fff; font-size:13px;
+    letter-spacing:2px; text-transform:uppercase;
+    font-family: 'Consolas', monospace;
+    text-shadow: 0 0 12px rgba(0,0,0,.8);
+  }
+
+  /* ---------- SPLASH ---------- */
+  #splash{
+    background:#000; display:flex; align-items:center; justify-content:center;
+  }
+  .r-logo{
+    width:120px; height:120px;
+    background:#f0a91a;
+    border-radius:22px;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    box-shadow: 0 0 60px rgba(240,169,26,.55);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  .r-logo svg{ width:60%; height:60%; }
+  @keyframes pulse{
+    0%,100%{ box-shadow: 0 0 40px rgba(240,169,26,.35); }
+    50%{ box-shadow: 0 0 70px rgba(240,169,26,.7); }
+  }
+
+  /* ---------- MAIN MENU ---------- */
+  #menu{
+    background:
+      linear-gradient(180deg, rgba(4,6,14,.35), rgba(4,6,14,.85)),
+      radial-gradient(120% 90% at 20% 20%, #1c2f55 0%, #0c1220 55%, #05070d 100%);
+  }
+  .menu-top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 34px 10px;
+  }
+  .menu-tabs{ display:flex; gap:26px; }
+  .menu-tabs span{
+    font-size:13px; letter-spacing:2px; text-transform:uppercase;
+    color: rgba(255,255,255,.55); padding-bottom:8px; cursor:default;
+  }
+  .menu-tabs span.on{ color:#fff; border-bottom:2px solid #fff; }
+  .vi-logo-small{ width:34px; height:34px; opacity:.9; }
+
+  .menu-grid{
+    flex:1; display:grid; grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr; gap:3px; padding: 0 3px 3px;
+  }
+  .tile{
+    position:relative; overflow:hidden;
+    display:flex; align-items:flex-end;
+    padding:16px 18px; cursor:default;
+    outline: 2px solid transparent; outline-offset:-2px;
+    transition: outline-color .15s ease;
+  }
+  .tile:hover{ outline-color: rgba(255,255,255,.6); }
+  .tile .label{
+    position:relative; z-index:2; font-size:20px; font-weight:700;
+    letter-spacing:1px; color:#fff; text-shadow: 0 2px 10px rgba(0,0,0,.7);
+  }
+  .tile .bg{
+    position:absolute; inset:0; z-index:1;
+  }
+  .tile.new .bg{ background: linear-gradient(160deg,#7a4a24,#c9701f 55%,#e8a444); }
+  .tile.cont .bg{ background: linear-gradient(160deg,#0a2233,#123b52 60%,#1c6f8f); }
+  .tile.coll .bg{ background: linear-gradient(160deg,#0e2a12,#1c4a1e 55%,#3f7a2c); }
+  .tile.prog .bg{ background: linear-gradient(160deg,#241018,#4a1420 55%,#7a1f2b); }
+  .tile .bg::after{
+    content:""; position:absolute; inset:0;
+    background: radial-gradient(60% 60% at 70% 20%, rgba(255,255,255,.18), transparent 60%);
+  }
+
+  .menu-footer{
+    display:flex; justify-content:center; gap:26px;
+    padding:14px; font-size:12px; color: rgba(255,255,255,.65);
+    letter-spacing:1px;
+  }
+  .menu-footer b{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:50%;
+    background: rgba(255,255,255,.15); margin-right:6px; font-size:10px;
+  }
+
+  .replay-btn{
+    position:absolute; bottom:16px; right:16px; z-index:50;
+    background: rgba(255,255,255,.08); color:#fff;
+    border:1px solid rgba(255,255,255,.25); border-radius:4px;
+    padding:8px 14px; font-size:11px; letter-spacing:1px;
+    cursor:pointer; text-transform:uppercase;
+    font-family: 'Consolas', monospace;
+  }
+  .replay-btn:hover{ background: rgba(255,255,255,.16); }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- LAUNCHER -->
+  <div class="window active" id="launcher">
+    <div class="titlebar"><div class="url"></div><div class="dots"><span></span><span></span><span></span></div></div>
+    <div class="launcher-body">
+      <div class="brand-row">
+        <svg class="vi-logo" viewBox="0 0 100 100">
+          <path d="M50 50 C 20 10, 0 20, 5 55 C 25 60, 40 60, 50 50 Z" fill="#f2f0e9" opacity="0.95"/>
+          <path d="M50 50 C 80 10, 100 20, 95 55 C 75 60, 60 60, 50 50 Z" fill="#f2f0e9" opacity="0.95"/>
+          <path d="M50 50 C 20 90, 0 80, 5 45 C 25 40, 40 40, 50 50 Z" fill="#c9c6bb" opacity="0.85"/>
+          <path d="M50 50 C 80 90, 100 80, 95 45 C 75 40, 60 40, 50 50 Z" fill="#c9c6bb" opacity="0.85"/>
+        </svg>
+        <div class="brand-text">
+          <h1>Grand Theft Auto VI</h1>
+          <div class="sub">Development Build</div>
+          <div class="ver">v.1.2.0.291</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Build</div>
+        <div class="kv-grid">
+          <div class="k">Build</div><div class="v">1.0245</div>
+          <div class="k">Branch</div><div class="v">main</div>
+          <div class="k">Platform</div><div class="v">Win64</div>
+          <div class="k">Runtime</div><div class="v">Vulkan</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Build Configuration</div>
+        <div class="config-body">
+          <select class="cfg"><option>Development</option></select>
+          <label class="chk"><input type="checkbox">Enable Debug Tools</label>
+          <label class="chk"><input type="checkbox">Skip Intro</label>
+          <label class="chk" checked><input type="checkbox" checked>Disable Online</label>
+        </div>
+      </div>
+
+      <div class="launch-row">
+        <button id="launchBtn">LAUNCH GAME</button>
+        <div class="status">Status: <b id="statusText">Ready</b></div>
+      </div>
+
+      <div class="panel console-panel">
+        <div class="panel-title">Launcher Console</div>
+        <div class="console-log" id="consoleLog"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSITION -->
+  <div id="transition">
+    <div class="blob"></div>
+    <div class="blob b2"></div>
+    <div class="transition-label">Loading&nbsp;&nbsp;Grand&nbsp;Theft&nbsp;Auto&nbsp;VI</div>
+  </div>
+
+  <!-- SPLASH -->
+  <div class="window" id="splash">
+    <div class="r-logo">
+      <svg viewBox="0 0 100 100">
+        <text x="50" y="68" font-family="Georgia, serif" font-weight="700" font-size="60" fill="#1a1a1a" text-anchor="middle">R</text>
+        <polygon points="78,55 82,66 94,66 84,73 88,85 78,77 68,85 72,73 62,66 74,66" fill="#f2f0e9"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- MENU -->
+  <div class="window" id="menu">
+    <div class="menu-top">
+      <div class="menu-tabs"><span class="on">Story</span><span>Online</span></div>
+      <svg class="vi-logo-small" viewBox="0 0 100 100">
+        <path d="M50 50 C 20 10, 0 20, 5 55 C 25 60, 40 60, 50 50 Z" fill="#fff" opacity="0.9"/>
+        <path d="M50 50 C 80 10, 100 20, 95 55 C 75 60, 60 60, 50 50 Z" fill="#fff" opacity="0.9"/>
+      </svg>
+    </div>
+    <div class="menu-grid">
+      <div class="tile new"><div class="bg"></div><div class="label">NEW GAME</div></div>
+      <div class="tile cont"><div class="bg"></div><div class="label">CONTINUE</div></div>
+      <div class="tile coll"><div class="bg"></div><div class="label">COLLECTIBLES</div></div>
+      <div class="tile prog"><div class="bg"></div><div class="label">PROGRESS</div></div>
+    </div>
+    <div class="menu-footer"><span><b>A</b>Select</span><span><b>B</b>Back</span><span>Social Club &nbsp;&nbsp; Settings</span></div>
+  </div>
+
+  <button class="replay-btn" id="replayBtn" style="display:none;">Replay</button>
+</div>
+
+<script>
+(function(){
+  const logEl = document.getElementById('consoleLog');
+  const btn = document.getElementById('launchBtn');
+  const statusText = document.getElementById('statusText');
+  const launcher = document.getElementById('launcher');
+  const transition = document.getElementById('transition');
+  const splash = document.getElementById('splash');
+  const menu = document.getElementById('menu');
+  const replayBtn = document.getElementById('replayBtn');
+
+  function ts(){
+    const d = new Date();
+    return '[' + [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':') + ']';
+  }
+  function log(msg, cls){
+    const line = document.createElement('div');
+    line.innerHTML = `<span class="ts">${ts()}</span><span class="${cls||''}">${msg}</span>`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  const bootLines = [
+    'Launcher initialized.',
+    'Loading project configuration...',
+    'Checking build files...',
+    'Required game assets found.',
+    'Ready.'
+  ];
+  bootLines.forEach((l,i)=> setTimeout(()=>log(l), i*220));
+
+  function runSequence(){
+    btn.disabled = true;
+    statusText.textContent = 'Launching...';
+    const steps = [
+      [400,  'Launching Grand Theft Auto VI...'],
+      [900,  'Loading game assets...'],
+      [1500, 'Initializing renderer (Vulkan)...'],
+      [2100, 'Handing off to game process...']
+    ];
+    steps.forEach(([t,msg])=> setTimeout(()=>log(msg), t));
+
+    setTimeout(()=>{ transition.classList.add('active'); }, 2600);
+
+    setTimeout(()=>{
+      launcher.classList.remove('active');
+      transition.classList.remove('active');
+      splash.classList.add('active');
+    }, 4400);
+
+    setTimeout(()=>{
+      splash.classList.remove('active');
+      menu.classList.add('active');
+      replayBtn.style.display = 'block';
+    }, 6600);
+  }
+
+  btn.addEventListener('click', runSequence);
+
+  replayBtn.addEventListener('click', ()=>{
+    menu.classList.remove('active');
+    splash.classList.remove('active');
+    transition.classList.remove('active');
+    logEl.innerHTML = '';
+    bootLines.forEach((l,i)=> setTimeout(()=>log(l), i*150));
+    launcher.classList.add('active');
+    btn.disabled = false;
+    statusText.textContent = 'Ready';
+    replayBtn.style.display = 'none';
+  });
+})();
+</script>
+</body>
+</html>
