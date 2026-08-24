@@ -12,17 +12,28 @@ keine Spiel-Screenshots.
 
 `index.html` direkt doppelklicken / im Browser öffnen. Keine Installation nötig.
 
-## Als Windows-.exe bauen
+## Als eigenständige Datei bauen
 
-Das kann nur auf einem Windows-Rechner gebaut werden (PyInstaller erzeugt
-keine Windows-exe von Linux aus). Schritte auf deinem Windows-PC:
+`launcher.py` öffnet `index.html` per `pywebview` in einem eigenen Fenster
+statt im Browser. PyInstaller kann nur für das OS bauen, auf dem es läuft
+(kein Cross-Compiling) — auf Windows entsteht eine `.exe`, auf Linux ein
+ELF-Binary.
 
+**Linux:**
+```bash
+sudo apt-get install python3-gi gir1.2-gtk-3.0 gir1.2-webkit2-4.1   # GTK3 + WebKit2GTK
+pip install -r requirements.txt
+./build.sh
+```
+Ergebnis: `dist/GTA6DevLauncher`. Läuft nur auf Systemen mit installiertem
+GTK3 + WebKit2GTK (auf den meisten GNOME-Desktops schon vorhanden) und
+einer glibc-Version >= der des Build-Rechners.
+
+**Windows:**
 ```bat
 pip install -r requirements.txt
 build.bat
 ```
-
-Die fertige `GTA6DevLauncher.exe` liegt danach in `dist\`. Sie öffnet
-`index.html` in einem eigenen Fenster (via `pywebview`) statt im Browser.
+Ergebnis: `dist\GTA6DevLauncher.exe`.
 
 Zum Testen ohne Build vorher: `python launcher.py`
