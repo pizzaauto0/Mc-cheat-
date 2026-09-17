@@ -13,9 +13,15 @@ Assets in diesem Repo sind eigenständig entstanden.
 ## Starten
 
 ```bash
-npm start           # startet einen lokalen Server und öffnet den Browser
-# oder ohne npm:
-python3 -m http.server 8080     # danach http://localhost:8080 öffnen
+node tools/serve.mjs      # braucht nur Node, kein npm -- dann http://localhost:8080
+```
+
+Alternativen, falls lieber:
+
+```bash
+npm start                 # startet http-server und öffnet den Browser
+py -m http.server 8080    # Windows mit Python
+python3 -m http.server 8080
 ```
 
 Ein Modulserver ist nötig, weil das Spiel ES-Module lädt — `index.html` direkt
@@ -133,6 +139,7 @@ src/parcours.js     Parcours-Modus: Szene, Monstertruck, Level-Logik
 src/levels.js       die 10 Parcours-Level als Daten
 src/textures.js     alle Texturen zur Laufzeit auf Canvas gemalt
 src/util.js         Mathe, Rauschen, seedbarer Zufall
+tools/serve.mjs        statischer Server ohne Abhängigkeiten
 tools/smoke-test.mjs   Headless-Test im echten Browser
 tools/check-levels.mjs Prüft die Parcours-Geometrie (Stufen, Lücken, Flaggen)
 tools/check-parcours.mjs Lässt Autopiloten durch alle Level fahren (Balancing)
