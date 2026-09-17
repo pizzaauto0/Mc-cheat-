@@ -714,10 +714,21 @@ async function boot() {
     $("loaderFill").style.width = `${pct}%`;
   };
 
-  if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
-    document.body.classList.add("touch");
-    input.bindTouch($("touchControls"));
+  // Erkennung ist auf manchen Geraeten (Touchscreen-Laptops, WebViews) unzuverlaessig,
+  // deshalb dreifach absichern: klassische Merkmale, grobe Zeigergenauigkeit und
+  // als letztes Netz der erste echte Touch, der tatsaechlich eintrifft.
+  input.bindTouch($("touchControls"));
+  const touchLikely = "ontouchstart" in window
+    || navigator.maxTouchPoints > 0
+    || window.matchMedia?.("(pointer: coarse)").matches;
+  const optTouch = $("optTouch");
+  function setTouchUi(on) {
+    document.body.classList.toggle("touch", on);
+    if (optTouch) optTouch.checked = on;
   }
+  setTouchUi(touchLikely);
+  optTouch?.addEventListener("change", (e) => setTouchUi(e.target.checked));
+  window.addEventListener("touchstart", () => setTouchUi(true), { once: true, passive: true });
 
   setLoader("Himmel und Licht…", 8);
   await nextFrame();

@@ -117,6 +117,24 @@ async function main() {
     `throttle=${plumbing.throttle} v=${plumbing.moving.toFixed(2)}`);
   if (wantShots) await page.screenshot({ path: path.join(SHOTS, "02-drive.png") });
 
+  // 3b) Lenkrichtung: D (steer=+1) muss auf dem Bildschirm nach RECHTS drehen,
+  //     A (steer=-1) nach LINKS -- das war vertauscht, deshalb als Regression fest verdrahtet.
+  const steerCheck = await page.evaluate(() => {
+    const g = window.__game, car = g.car;
+    const h = 1 / 120;
+    car.reset({ x: 0, y: car.pos.y, z: 0, yaw: 0 });
+    for (let i = 0; i < 120 * 2; i++) car.update(h, { throttle: 1, brake: 0, steer: 1, handbrake: false, nitro: false });
+    const dKeyX = car.pos.x;
+    car.reset({ x: 0, y: car.pos.y, z: 0, yaw: 0 });
+    for (let i = 0; i < 120 * 2; i++) car.update(h, { throttle: 1, brake: 0, steer: -1, handbrake: false, nitro: false });
+    const aKeyX = car.pos.x;
+    return { dKeyX, aKeyX };
+  });
+  // Kamera schaut entlang +z (Fahrtrichtung bei yaw=0); mit einem Rechtssystem
+  // und Y-Up projiziert Welt-X dabei GESPIEGELT auf den Bildschirm (rechts = -X).
+  check("D lenkt sichtbar nach rechts, A nach links", steerCheck.dKeyX < 0 && steerCheck.aKeyX > 0,
+    `D->x=${steerCheck.dKeyX.toFixed(2)} (soll <0) · A->x=${steerCheck.aKeyX.toFixed(2)} (soll >0)`);
+
   // 4) Physik deterministisch durchrechnen (unabhaengig von der Bildrate,
   //    weil Software-WebGL im Container nur wenige fps schafft)
   const physics = await page.evaluate(() => {

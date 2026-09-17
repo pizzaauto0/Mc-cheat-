@@ -253,7 +253,12 @@ export function createVehicle(scene, world, specId = "sprint", opts = {}) {
     const b = spec.body;
     const throttleIn = clamp(input.throttle ?? 0, 0, 1);
     const brakeIn = clamp(input.brake ?? 0, 0, 1);
-    const steerIn = clamp(input.steer ?? 0, -1, 1);
+    // input.steer folgt der ueblichen Achsenkonvention (-1 = links, +1 = rechts).
+    // Die interne Fahrphysik (forward/rightVec, Gierrichtung) benutzt dagegen ein
+    // Koordinatensystem, in dem positives car.steer optisch nach LINKS lenkt --
+    // deshalb hier einmal umdrehen, statt an jeder Formel unten das Vorzeichen
+    // nachzuziehen. Durch Playwright-Projektionstest verifiziert.
+    const steerIn = -clamp(input.steer ?? 0, -1, 1);
     const handbrake = !!input.handbrake;
 
     car.throttleSmooth = damp(car.throttleSmooth, throttleIn, 9, dt);

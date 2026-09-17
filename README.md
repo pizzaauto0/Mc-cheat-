@@ -40,7 +40,10 @@ per Doppelklick (`file://`) funktioniert nicht.
 | `Esc` / `P` | Pause · `M` Ton · `F` Vollbild · `H` Hilfe |
 
 Gamepad (Standard-Mapping) und Touch-Buttons auf dem Handy funktionieren
-ebenfalls.
+ebenfalls. Die Touch-Buttons erscheinen automatisch, wenn das Gerät sich als
+Touchscreen meldet — falls die Erkennung mal danebenliegt (z. B. bei manchen
+Touchscreen-Laptops), lassen sie sich im Startmenü unter „Touch-Buttons
+anzeigen" auch manuell einschalten.
 
 ## Modi
 
