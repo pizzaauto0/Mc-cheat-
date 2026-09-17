@@ -1,0 +1,14 @@
+{
+  "name": "asphalt-drift",
+  "version": "1.0.0",
+  "description": "Asphalt Drift - ein Open-World-Fahrspiel fuer den Browser (WebGL, eigene Arcade-Fahrphysik)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes http-server . -p 8080 -c-1 -o",
+    "serve": "npx --yes http-server . -p 8080 -c-1",
+    "test": "node tools/smoke-test.mjs"
+  },
+  "keywords": ["game", "driving", "webgl", "threejs", "drift", "open-world"],
+  "license": "MIT"
+}

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Asphalt Drift — Open-World Fahrspiel</title>
+<meta name="description" content="Asphalt Drift: freies Fahren, Drift-Challenge und Zeitfahren in einer offenen 3D-Stadt. Laeuft direkt im Browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128663;</text></svg>">
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/webgpu": "./vendor/three/three.module.js" } }
+</script>
+</head>
+<body>
+<canvas id="viewport"></canvas>
+
+<!-- ============================== HUD ============================== -->
+<div id="hud" class="hidden">
+  <div class="hud-top">
+    <div class="panel mode-panel">
+      <div class="mode-name" id="modeName">Freies Fahren</div>
+      <div class="mode-line" id="modeLine">Fahre, wohin du willst.</div>
+      <div class="mode-sub" id="modeSub"></div>
+    </div>
+    <div class="panel score-panel" id="scorePanel">
+      <div class="score-row"><span class="label">Punkte</span><span class="value" id="scoreValue">0</span></div>
+      <div class="score-row small"><span class="label">Beste</span><span class="value" id="bestValue">—</span></div>
+    </div>
+  </div>
+
+  <div class="drift-float" id="driftFloat">
+    <div class="drift-points" id="driftPoints">0</div>
+    <div class="drift-label" id="driftLabel">DRIFT</div>
+    <div class="drift-mult" id="driftMult">x1.0</div>
+  </div>
+
+  <div class="target-arrow hidden" id="targetArrow">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3 L41 41 L24 32 L7 41 Z"/></svg>
+    <div class="target-dist" id="targetDist">0 m</div>
+  </div>
+
+  <div class="hud-bottom">
+    <div class="tele-left">
+      <div class="nitro-wrap">
+        <div class="nitro-bar"><i id="nitroFill"></i></div>
+        <span class="nitro-cap">NITRO</span>
+      </div>
+      <div class="hint-row" id="hintRow">WASD fahren · Space Handbremse · Shift Nitro · C Kamera · R Reset</div>
+    </div>
+    <div class="cluster">
+      <canvas id="speedo" width="260" height="260"></canvas>
+      <div class="cluster-digits">
+        <div class="kmh" id="kmh">0</div>
+        <div class="kmh-unit">km/h</div>
+        <div class="gear" id="gear">N</div>
+      </div>
+    </div>
+    <div class="map-wrap panel">
+      <canvas id="minimap" width="240" height="240"></canvas>
+    </div>
+  </div>
+
+  <div class="touch-controls" id="touchControls">
+    <div class="tc-left">
+      <button class="tc-btn" data-key="left">◀</button>
+      <button class="tc-btn" data-key="right">▶</button>
+    </div>
+    <div class="tc-right">
+      <button class="tc-btn wide" data-key="handbrake">HB</button>
+      <button class="tc-btn" data-key="brake">▼</button>
+      <button class="tc-btn accel" data-key="throttle">▲</button>
+      <button class="tc-btn wide nos" data-key="nitro">N2O</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- ============================== MENUS ============================== -->
+<div id="menu" class="overlay">
+  <div class="menu-card">
+    <header>
+      <h1>ASPHALT<span>DRIFT</span></h1>
+      <p class="tag">Open-World-Fahrspiel · eigene Arcade-Physik · läuft komplett im Browser</p>
+    </header>
+
+    <section>
+      <h2>Modus</h2>
+      <div class="chips" id="modeChips">
+        <button class="chip active" data-mode="freeroam"><b>Freies Fahren</b><small>Stadt, Berge, Stuntpark — keine Regeln</small></button>
+        <button class="chip" data-mode="drift"><b>Drift-Challenge</b><small>120 s Punkte sammeln, Kette halten</small></button>
+        <button class="chip" data-mode="timetrial"><b>Zeitfahren</b><small>12 Checkpoints, beste Runde schlagen</small></button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Fahrzeug</h2>
+      <div class="cars" id="carList"></div>
+    </section>
+
+    <footer>
+      <button class="play" id="playBtn">LOS GEHT'S</button>
+      <div class="controls-grid">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / Pfeile — Fahren</div>
+        <div><kbd>Space</kbd> Handbremse (Drift)</div>
+        <div><kbd>Shift</kbd> Nitro</div>
+        <div><kbd>C</kbd> Kamera · <kbd>T</kbd> Tageszeit</div>
+        <div><kbd>R</kbd> Reset · <kbd>Esc</kbd> Pause</div>
+        <div><kbd>M</kbd> Ton · <kbd>F</kbd> Vollbild</div>
+      </div>
+      <div class="settings-row">
+        <label><input type="checkbox" id="optShadows" checked> Schatten</label>
+        <label><input type="checkbox" id="optTraffic" checked> Verkehr</label>
+        <label>Qualität
+          <select id="optQuality">
+            <option value="1">Hoch</option>
+            <option value="0.8" selected>Mittel</option>
+            <option value="0.6">Niedrig</option>
+          </select>
+        </label>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <div class="menu-card small">
+    <h2 class="pause-title">Pause</h2>
+    <div class="pause-stats" id="pauseStats"></div>
+    <div class="pause-btns">
+      <button class="play" id="resumeBtn">Weiter</button>
+      <button class="ghost" id="restartBtn">Neustart</button>
+      <button class="ghost" id="garageBtn">Garage / Modus</button>
+    </div>
+  </div>
+</div>
+
+<div id="result" class="overlay hidden">
+  <div class="menu-card small">
+    <h2 class="pause-title" id="resultTitle">Fertig!</h2>
+    <div class="result-big" id="resultBig">—</div>
+    <div class="pause-stats" id="resultStats"></div>
+    <div class="pause-btns">
+      <button class="play" id="againBtn">Nochmal</button>
+      <button class="ghost" id="resultMenuBtn">Hauptmenü</button>
+    </div>
+  </div>
+</div>
+
+<div id="loading" class="overlay">
+  <div class="loader">
+    <div class="loader-car">🚗</div>
+    <div class="loader-text" id="loaderText">Welt wird gebaut…</div>
+    <div class="loader-bar"><i id="loaderFill"></i></div>
+  </div>
+</div>
+
+<div id="fatal" class="overlay hidden"><div class="menu-card small"><h2 class="pause-title">Ups</h2><pre id="fatalMsg"></pre></div></div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

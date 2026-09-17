@@ -1,68 +1,134 @@
-# CheatHub
+# Asphalt Drift
 
-Ein eigenständiges Electron-Programm im Stil von WeMod: erkennt laufende Spiele automatisch
-und schaltet dafür Singleplayer-Cheats frei, die du per Klick an-/ausschalten kannst.
-Aktuell unterstützt: **Minecraft Java Edition 1.21.11**. Die Architektur ist bewusst so
-gebaut, dass weitere Spiele später als eigenes "Game-Plugin" ergänzt werden können.
+Ein Open-World-Fahrspiel für den Browser: freies Fahren durch eine Stadt mit
+Umland, Drift-Challenge auf dem Driftkreis und Zeitfahren über 12 Checkpoints.
+Kein Download, kein Build-Schritt, keine Engine — reines WebGL mit eigener
+Arcade-Fahrphysik. Als Vorbild diente die Art von Spiel, die auf drivegame.io
+läuft (freies Fahren, Drift, Stunts, Physik-Handling); Code, Welt und alle
+Assets in diesem Repo sind eigenständig entstanden.
 
-## Warum zwei Teile?
+![Stadtfahrt](docs/stadt.png)
 
-Electron kann nicht in den Minecraft-(Java-)Prozess eingreifen (kein Speicher-Hack wie bei
-nativen Games). Deshalb besteht CheatHub aus zwei Komponenten, die lokal über WebSocket
-miteinander reden:
+## Starten
 
-1. **`electron-app/`** – die eigentliche App/Oberfläche. Erkennt, ob `javaw`/`java` mit
-   Minecraft läuft, zeigt die Spielebibliothek, verbindet sich mit dem Mod und schickt
-   Cheat-Befehle.
-2. **`minecraft-mod/`** – ein kleiner Fabric-Mod ("CheatBridge"), den du einmalig in deinen
-   Minecraft-Mods-Ordner legst. Er startet einen lokalen WebSocket-Server
-   (`127.0.0.1:34551`, nur lokal erreichbar) und setzt die Cheats tatsächlich im Spiel um.
-
-```
-Electron UI  <── WebSocket (localhost:34551) ──>  Fabric-Mod "CheatBridge"  ──>  Minecraft
-```
-
-Nur Singleplayer/lokale Welten – der Mod aktiviert Cheats ausschließlich für die
-integrierte Server-Instanz deiner eigenen Welt.
-
-## Setup
-
-### 1. Minecraft-Mod installieren
-Siehe [`minecraft-mod/README.md`](minecraft-mod/README.md) – kurz gesagt: Fabric Loader
-installieren, `CheatBridge` + Fabric API in den `mods`-Ordner legen, Minecraft starten.
-
-### 2. Electron-App starten
 ```bash
-cd electron-app
-npm install
-npm start
+npm start           # startet einen lokalen Server und öffnet den Browser
+# oder ohne npm:
+python3 -m http.server 8080     # danach http://localhost:8080 öffnen
 ```
 
-Die App zeigt "Minecraft: nicht erkannt", bis Minecraft läuft. Sobald ein Prozess mit
-`javaw`/`java` erkannt wird, versucht sie sich mit dem Mod zu verbinden. Läuft eine Welt,
-werden die Cheats im Panel aktiv klickbar.
+Ein Modulserver ist nötig, weil das Spiel ES-Module lädt — `index.html` direkt
+per Doppelklick (`file://`) funktioniert nicht.
 
-## Menü per Hotkey öffnen/schließen
+## Steuerung
 
-Ein globaler Hotkey (Standard: **Einfg/Insert**, alternativ z.B. **F7** einstellbar)
-blendet das CheatHub-Fenster ein und aus – funktioniert systemweit, auch wenn Minecraft
-gerade im Vordergrund ist. Einstellbar unter **⚙ Einstellungen** in der Sidebar, zusammen
-mit dem Minecraft-Bridge-Port (falls 34551 bei dir belegt ist). Die Einstellungen werden
-in `config.json` im App-Datenverzeichnis gespeichert und bleiben über Neustarts erhalten.
+| Taste | Funktion |
+| --- | --- |
+| `W` `A` `S` `D` / Pfeile | Gas, Lenken, Bremse/Rückwärts |
+| `Space` | Handbremse (der Drift-Knopf) |
+| `Shift` | Nitro (füllt sich von selbst wieder auf) |
+| `C` | Kamera: Verfolger, Nah, Cockpit, Kino, Vogelperspektive |
+| `T` | Tageszeit: Tag → Abend → Nacht (nachts mit Scheinwerfern) |
+| `R` | Reset auf die nächste Straße |
+| `Esc` / `P` | Pause · `M` Ton · `F` Vollbild · `H` Hilfe |
 
-## Neues Spiel hinzufügen (später)
+Gamepad (Standard-Mapping) und Touch-Buttons auf dem Handy funktionieren
+ebenfalls.
 
-Jedes Spiel ist ein Modul unter `electron-app/src/main/games/*.js` mit:
-- Prozess-Erkennungsmuster (Name/Cmdline-Regex)
-- Anzeige-Metadaten (Name, Icon, Beschreibung)
-- einem "Connector", der beschreibt, wie die App mit dem Spiel/seinem Bridge-Mod spricht
+## Modi
 
-`src/main/games/index.js` registriert alle Spiele. Für ein neues Spiel reicht eine neue
-Datei + Eintrag in der Registry – der Rest der UI (Bibliothek, Cheat-Panel, Verbindungsstatus)
-ist generisch und braucht keine Änderung.
+* **Freies Fahren** — 1,6 × 1,6 km Welt: Rasterstadt, Ringautobahn, Zubringer,
+  Schotterwege ins Hügelland, Stuntpark im Osten, Driftkreis im Westen.
+  Drift- und Airtime-Punkte laufen mit, Ziele gibt es keine.
+* **Drift-Challenge** — 120 Sekunden auf dem Driftkreis. Punkte steigen mit
+  Winkel und Geschwindigkeit, die Kette wächst bis Faktor 5 und reißt ab,
+  sobald das Auto wieder geradeaus rollt.
+* **Zeitfahren** — 12 Tore quer durch Stadt und Ring. Bestzeit wird pro
+  Fahrzeug im Browser (localStorage) gespeichert.
 
-## Rechtlicher Hinweis
+![Drift](docs/drift.png)
 
-CheatHub verändert ausschließlich deine eigene lokale Singleplayer-Welt. Es greift nicht in
-Multiplayer-Server, andere Spieler oder fremde Prozesse ein. Nutzung auf Servern mit fremden
-Regeln/Anti-Cheat kann gegen deren Regeln verstoßen – das liegt in deiner Verantwortung.
+## Fahrzeuge
+
+Werte gemessen aus dem laufenden Spiel (Vollgas auf Asphalt, ohne Nitro):
+
+| Fahrzeug | Klasse | Antrieb | 0–100 km/h | erreichte V-max |
+| --- | --- | --- | --- | --- |
+| Sprint 1.6 | Kompakt | Front | 5,7 s | ~176 km/h |
+| Brute V8 | Muscle | Heck | 3,6 s | ~225 km/h |
+| Trail 4x4 | Offroad | Allrad | 6,6 s | ~160 km/h |
+| Apex GT | Supersport | Allrad | 2,5 s | ~270 km/h |
+
+Heckantrieb bricht früher aus, der 4x4 hat auf Wiese und Schotter deutlich mehr
+Grip als die Straßenautos.
+
+## Wie die Fahrphysik funktioniert
+
+`src/vehicle.js` rechnet ein Fahrradmodell mit Schräglaufwinkeln:
+
+* Längsdynamik: Leistungskurve (fällt zum Top-Speed hin auf null), Luft- und
+  Rollwiderstand werden so aufgeteilt, dass die Endgeschwindigkeit exakt dem
+  Fahrzeugwert entspricht; weicher Untergrund erhöht den Rollwiderstand.
+* Querdynamik: Schräglaufwinkel vorne/hinten → Seitenkräfte, begrenzt durch
+  einen **Reibkreis**. Hartes Gas oder Bremsen frisst also Seitenhaftung —
+  daraus entstehen Übersteuern und Drifts von selbst. Die Handbremse senkt nur
+  das Grip-Limit der Hinterachse.
+* Untergrund: vier Räder tasten das Höhenfeld ab. Daraus kommen Nick- und
+  Wankwinkel, Federweg und der Absprung an Rampenkanten (die vertikale
+  Geschwindigkeit stammt aus der Steigrate der Rampe, deshalb fliegt das Auto
+  realistisch weit).
+* Kollisionen: Kreis gegen Box/Zylinder mit Rückstoß und Schrammdämpfung;
+  Hütchen werden als eigene kleine Physikobjekte weggekickt.
+
+## Aufbau
+
+```
+index.html          HUD- und Menü-Markup, Importmap
+styles.css          komplettes UI
+src/main.js         Spielzustand, Modi, Renderloop, Menüs
+src/world.js        Weltgenerierung: Terrain, Straßen, Stadt, Rampen, Kollider
+src/vehicle.js      Fahrphysik + Fahrzeugbau (Geometrie aus Code)
+src/camera.js       fünf Kameramodi, Federung, Screenshake
+src/effects.js      Reifenspuren, Staub, Funken (feste Buffer-Pools)
+src/sky.js          Himmel, Licht, Nebel, Wolken, Sterne, Tageszeit
+src/audio.js        Motor, Reifen, Wind, Aufpralle — komplett synthetisiert
+src/traffic.js      KI-Verkehr auf Ring und Stadtrunden
+src/hud.js          Tacho, Minimap, Anzeigen
+src/textures.js     alle Texturen zur Laufzeit auf Canvas gemalt
+src/util.js         Mathe, Rauschen, seedbarer Zufall
+tools/smoke-test.mjs  Headless-Test im echten Browser
+vendor/three/       three.js r186 (MIT), lokal eingebunden
+```
+
+Die Welt ist deterministisch aus einem Seed erzeugt (`createWorld(scene, { seed })`).
+Terrain, Grip und Oberflächenart liegen als Gitterfelder vor, die Physik fragt
+genau die Geometrie ab, die auch gerendert wird. Es gibt keine Bilddateien und
+keine Audiodateien: Fassaden, Asphalt, Wolken und Motorsound entstehen im Code.
+
+![Stuntpark](docs/stuntpark.png)
+
+## Tests
+
+```bash
+npm test            # startet Chromium headless, fährt selbst und prüft 23 Checks
+```
+
+Der Test lädt das Spiel in einem echten Browser, rechnet die Physik
+bildratenunabhängig durch und prüft u. a. Beschleunigung, Endgeschwindigkeit,
+Bremsweg, Driftwinkel, Rampensprung, Untergrund-Grip, Kollisionen,
+Checkpoint-Erkennung und Punktevergabe — und dass keine JS-Fehler auftreten.
+Screenshots landen in `screenshots/`. Läuft im Container über Software-WebGL,
+daher dort nur wenige fps; auf echter Hardware sind es ~60.
+
+## Technik-Notizen
+
+* Qualitätsstufen (Renderskalierung), Schatten und Verkehr sind im Startmenü
+  abschaltbar — damit läuft es auch auf schwächeren Geräten und Handys.
+* Rund 160 k Dreiecke, ~100 Draw-Calls: Häuser, Bäume, Felsen, Laternen und
+  Hütchen sind `InstancedMesh`-Gruppen.
+* Bestzeiten und Punkte liegen in `localStorage` (`asphalt-drift.v1`).
+
+## Lizenz
+
+Eigener Code: MIT. `vendor/three/` enthält three.js (MIT, siehe
+`vendor/three/LICENSE`).
