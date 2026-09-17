@@ -9,6 +9,7 @@ import { createSky } from "./sky.js";
 import { createAudio } from "./audio.js";
 import { createTraffic } from "./traffic.js";
 import { createHud } from "./hud.js";
+import { createParcours } from "./parcours.js";
 import { clamp, lerp, formatTime, formatNumber, toKmh } from "./util.js";
 
 const STORAGE_KEY = "asphalt-drift.v1";
@@ -59,6 +60,8 @@ const audio = createAudio();
 const input = createInput();
 
 let world, car, traffic, effects, sky, camRig, gates = [];
+let parcours = null;
+const pcTouch = { gas: 0, reverse: 0 };
 
 function applyQuality() {
   const q = Number(game.settings.quality) || 0.8;
@@ -287,6 +290,8 @@ function startRun(mode, carId) {
   game.mode = mode;
   game.carId = carId ?? game.carId;
 
+  if (mode === "parcours") { startParcours(); return; }
+
   if (!car || car.spec.id !== game.carId) {
     if (car) car.dispose();
     car = createVehicle(scene, world, game.carId);
@@ -320,6 +325,132 @@ function startRun(mode, carId) {
     timetrial: "Folge dem Pfeil durch alle Tore. Nitro spart Zehntel.",
   };
   hud.toast(hints[mode] ?? "", 3.4);
+}
+
+/* --------------------------------------------------------- Parcours */
+
+function pcEl(id) { return $(id); }
+
+function startParcours() {
+  if (!parcours) {
+    parcours = createParcours({ renderer, audio });
+    parcours.onChange(renderParcoursHud);
+    parcours.resize(window.innerWidth, window.innerHeight);
+    wireParcoursUi();
+    window.__game.parcours = parcours;
+  }
+  game.state = "parcours";
+  hud.hide();
+  $("menu").classList.add("hidden");
+  $("pause").classList.add("hidden");
+  $("result").classList.add("hidden");
+  $("pcHud").classList.remove("hidden");
+  $("pcPicker").classList.add("hidden");
+  input.setEnabled(true);
+  audio.resume();
+  const st = parcours.status();
+  const startAt = clamp((st.unlocked ?? 1) - 1, 0, parcours.levels.length - 1);
+  parcours.start(startAt);
+}
+
+function leaveParcours() {
+  if (parcours) parcours.stop();
+  $("pcHud").classList.add("hidden");
+  pcTouch.gas = 0; pcTouch.reverse = 0;
+  openMenu();
+}
+
+function renderParcoursHud(st) {
+  pcEl("pcBanner").textContent = `Level ${st.levelIndex + 1}/${st.levelCount} · ${st.name}`;
+  pcEl("pcAttempts").textContent = `Versuch ${st.attempts}`;
+  pcEl("pcBest").textContent = st.best ? `Beste ${formatTime(st.best * 1000)}` : "Beste —";
+  pcEl("pcHint").textContent = st.hint;
+  const center = pcEl("pcCenter");
+  const title = pcEl("pcCenterTitle");
+  const sub = pcEl("pcCenterSub");
+  const btns = pcEl("pcCenterBtns");
+  if (st.phase === "crashed") {
+    center.classList.remove("hidden");
+    title.textContent = "Aua!";
+    sub.textContent = `${st.message} · neuer Versuch startet…`;
+    btns.innerHTML = "";
+    const again = document.createElement("button");
+    again.className = "primary";
+    again.textContent = "Sofort nochmal (R)";
+    again.onclick = () => { audio.click(); parcours.restart(); };
+    btns.appendChild(again);
+  } else if (st.phase === "won") {
+    center.classList.remove("hidden");
+    title.textContent = st.record ? "Bestzeit!" : "Geschafft!";
+    sub.innerHTML = `Zeit <b>${formatTime(st.time * 1000)}</b> · ${st.attempts} Versuch${st.attempts === 1 ? "" : "e"}`;
+    btns.innerHTML = "";
+    if (!st.isLast) {
+      const next = document.createElement("button");
+      next.className = "primary";
+      next.textContent = "Nächstes Level";
+      next.onclick = () => { audio.click(); parcours.nextLevel(); };
+      btns.appendChild(next);
+    }
+    const retry = document.createElement("button");
+    retry.className = "sec";
+    retry.textContent = "Nochmal fahren";
+    retry.onclick = () => { audio.click(); parcours.setLevel(st.levelIndex); };
+    btns.appendChild(retry);
+    const menu = document.createElement("button");
+    menu.className = "sec";
+    menu.textContent = "Hauptmenü";
+    menu.onclick = () => { audio.click(); leaveParcours(); };
+    btns.appendChild(menu);
+  } else {
+    center.classList.add("hidden");
+  }
+  buildLevelPicker(st);
+}
+
+function buildLevelPicker(st) {
+  const grid = pcEl("pcGrid");
+  grid.innerHTML = "";
+  parcours.levels.forEach((lvl, i) => {
+    const locked = i >= (st.unlocked ?? 1);
+    const best = parcours.status().levelIndex === i ? st.best : null;
+    const btn = document.createElement("button");
+    btn.className = "pc-lvl" + (locked ? " locked" : "") + (i < (st.unlocked ?? 1) - 1 ? " done" : "");
+    btn.innerHTML = `<b>${i + 1}. ${lvl.name}</b><small>${locked ? "gesperrt" : best ? formatTime(best * 1000) : "offen"}</small>`;
+    if (!locked) {
+      btn.onclick = () => {
+        audio.click();
+        $("pcPicker").classList.add("hidden");
+        parcours.setLevel(i);
+      };
+    }
+    grid.appendChild(btn);
+  });
+}
+
+function wireParcoursUi() {
+  pcEl("pcRestart").onclick = () => { audio.click(); parcours.restart(); };
+  pcEl("pcExit").onclick = () => { audio.click(); leaveParcours(); };
+  pcEl("pcLevelsBtn").onclick = () => {
+    audio.click();
+    $("pcPicker").classList.toggle("hidden");
+  };
+  pcEl("pcPickerClose").onclick = () => { audio.click(); $("pcPicker").classList.add("hidden"); };
+  document.querySelectorAll("[data-pc]").forEach((btn) => {
+    const key = btn.dataset.pc;
+    const down = (e) => { e.preventDefault(); pcTouch[key] = 1; btn.classList.add("on"); };
+    const up = (e) => { e.preventDefault(); pcTouch[key] = 0; btn.classList.remove("on"); };
+    btn.addEventListener("pointerdown", down);
+    btn.addEventListener("pointerup", up);
+    btn.addEventListener("pointercancel", up);
+    btn.addEventListener("pointerleave", up);
+  });
+}
+
+function parcoursInput() {
+  const s = input.read();
+  const gas = Math.max(s.throttle, s.steer > 0 ? s.steer : 0, pcTouch.gas);
+  const reverse = Math.max(s.brake, s.steer < 0 ? -s.steer : 0, pcTouch.reverse);
+  return { gas, reverse };
 }
 
 /* -------------------------------------------------------- Frame-Logik */
@@ -397,6 +528,14 @@ function frame(now) {
   fpsAccum += rawDt; fpsFrames++;
   if (fpsAccum > 0.5) { fps = fpsFrames / fpsAccum; fpsAccum = 0; fpsFrames = 0; }
 
+  if (game.state === "parcours" && parcours) {
+    parcours.update(dt, parcoursInput());
+    parcours.render();
+    const st = parcours.status();
+    $("pcTime").textContent = formatTime(st.time * 1000);
+    return;
+  }
+
   if (!world || !car) return;
 
   if (game.state === "play") {
@@ -457,6 +596,7 @@ function wireMenu() {
     chip.addEventListener("click", () => {
       game.mode = chip.dataset.mode;
       $("modeChips").querySelectorAll("[data-mode]").forEach((c) => c.classList.toggle("active", c === chip));
+      $("carNote").textContent = game.mode === "parcours" ? "— im Parcours fährt der Monstertruck" : "";
       audio.resume(); audio.click();
     });
   });
@@ -490,6 +630,8 @@ function openMenu() {
   game.state = "menu";
   input.setEnabled(false);
   hud.hide();
+  $("pcHud").classList.add("hidden");
+  parcours?.stop();
   $("pause").classList.add("hidden");
   $("result").classList.add("hidden");
   $("menu").classList.remove("hidden");
@@ -525,6 +667,7 @@ function wireHotkeys() {
     hud.toast(`Kamera: ${mode.label}`, 1.2);
   });
   input.on("reset", () => {
+    if (game.state === "parcours") { parcours?.restart(); return; }
     if (game.state !== "play") return;
     const snap = world.snapToRoad(car.pos.x, car.pos.z, car.yaw);
     car.reset({ ...snap, y: world.terrainHeightAt(snap.x, snap.z) });
@@ -545,7 +688,15 @@ function wireHotkeys() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
     else document.exitFullscreen?.();
   });
+  input.on("levels", () => {
+    if (game.state === "parcours") $("pcPicker").classList.toggle("hidden");
+  });
   input.on("pause", () => {
+    if (game.state === "parcours") {
+      if (!$("pcPicker").classList.contains("hidden")) $("pcPicker").classList.add("hidden");
+      else leaveParcours();
+      return;
+    }
     if (game.state === "play") togglePause(true);
     else if (game.state === "pause") togglePause(false);
     else if (game.state === "result") openMenu();
@@ -619,6 +770,7 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / Math.max(window.innerHeight, 1);
   camera.updateProjectionMatrix();
   applyQuality();
+  parcours?.resize(window.innerWidth, window.innerHeight);
 });
 
 document.addEventListener("visibilitychange", () => {

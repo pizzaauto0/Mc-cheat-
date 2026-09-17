@@ -90,11 +90,12 @@
         <button class="chip active" data-mode="freeroam"><b>Freies Fahren</b><small>Stadt, Berge, Stuntpark — keine Regeln</small></button>
         <button class="chip" data-mode="drift"><b>Drift-Challenge</b><small>120 s Punkte sammeln, Kette halten</small></button>
         <button class="chip" data-mode="timetrial"><b>Zeitfahren</b><small>12 Checkpoints, beste Runde schlagen</small></button>
+        <button class="chip" data-mode="parcours"><b>Parcours</b><small>2D-Physik von der Seite: 10 Level, nur Gas und Rückwärts</small></button>
       </div>
     </section>
 
     <section>
-      <h2>Fahrzeug</h2>
+      <h2>Fahrzeug <span class="h2-note" id="carNote"></span></h2>
       <div class="cars" id="carList"></div>
     </section>
 
@@ -120,6 +121,38 @@
         </label>
       </div>
     </footer>
+  </div>
+</div>
+
+<!-- ============================== PARCOURS ============================== -->
+<div id="pcHud" class="hidden">
+  <div class="pc-banner" id="pcBanner">Level 1 · Aufwärmen</div>
+  <div class="pc-stats">
+    <span class="pc-time" id="pcTime">0:00.00</span>
+    <span id="pcAttempts">Versuch 1</span>
+    <span id="pcBest">Beste —</span>
+  </div>
+  <div class="pc-hint" id="pcHint"></div>
+  <div class="pc-tools">
+    <button class="pc-icon" id="pcRestart" title="Neustart (R)">⟳</button>
+    <button class="pc-icon" id="pcLevelsBtn" title="Level wählen (L)">☰</button>
+    <button class="pc-icon" id="pcExit" title="Hauptmenü (Esc)">✕</button>
+  </div>
+  <div class="pc-pedals">
+    <button class="pc-pedal" data-pc="reverse" aria-label="Rückwärts">◀</button>
+    <button class="pc-pedal" data-pc="gas" aria-label="Gas">▶</button>
+  </div>
+  <div class="pc-center hidden" id="pcCenter">
+    <div class="pc-center-title" id="pcCenterTitle"></div>
+    <div class="pc-center-sub" id="pcCenterSub"></div>
+    <div class="pc-center-btns" id="pcCenterBtns"></div>
+  </div>
+  <div class="pc-picker hidden" id="pcPicker">
+    <div class="pc-picker-card">
+      <h2>Level</h2>
+      <div class="pc-grid" id="pcGrid"></div>
+      <button class="ghost" id="pcPickerClose">Zurück</button>
+    </div>
   </div>
 </div>
 

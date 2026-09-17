@@ -259,7 +259,89 @@ async function main() {
   await page.keyboard.up("w");
   if (wantShots) await page.screenshot({ path: path.join(SHOTS, "06-stuntpark.png") });
 
-  // 9) Performance grob
+  // 9) Parcours-Modus (2D-Physik in Seitenansicht)
+  await page.evaluate(() => window.__game.startRun("parcours"));
+  await page.waitForFunction("window.__game.state === 'parcours' && window.__game.parcours", null, { timeout: 15000 });
+  check("Parcours startet", true);
+  if (wantShots) await page.screenshot({ path: path.join(SHOTS, "07-parcours.png") });
+
+  const pc = await page.evaluate(() => {
+    const p = window.__game.parcours;
+    const h = 1 / 60;
+    const out = {};
+    // Level 1 mit reinem Vollgas: muss durchfahrbar sein
+    p.setLevel(0);
+    const startX = p.truck.body.x;
+    let maxAir = 0, maxY = -99, nan = false;
+    for (let i = 0; i < 60 * 30; i++) {
+      p.update(h, { gas: 1, reverse: 0 });
+      const b = p.truck.body;
+      if (!isFinite(b.x) || !isFinite(b.y) || !isFinite(b.angle)) { nan = true; break; }
+      maxAir = Math.max(maxAir, p.truck.airTime);
+      maxY = Math.max(maxY, b.y);
+      if (p.status().phase !== "driving") break;
+    }
+    out.level1 = {
+      phase: p.status().phase, x: p.truck.body.x, startX, maxAir, maxY, nan,
+      time: p.status().time, attempts: p.status().attempts,
+    };
+
+    // Ueberschlag muss als Absturz erkannt werden
+    p.setLevel(0);
+    p.truck.body.angle = Math.PI;          // auf dem Dach
+    p.truck.body.y += 0.4;
+    out.crash = "driving";
+    for (let i = 0; i < 60 * 1.2; i++) {     // vor dem automatischen Neustart pruefen
+      p.update(h, { gas: 0, reverse: 0 });
+      if (p.status().phase === "crashed") { out.crash = "crashed"; break; }
+    }
+
+    // Wippe: Fahrzeug erreicht die Wippe und sie kippt.
+    // Die Wippe wird bei jedem Levelaufbau neu erzeugt, deshalb jedes Mal
+    // frisch aus der Physikwelt holen statt eine Referenz zu halten.
+    p.setLevel(2);
+    const seesawAngle = () => p.physics.bodies.find((b) => b.tag === "seesaw")?.angle ?? 0;
+    const a0 = seesawAngle();
+    let moved = 0;
+    for (let i = 0; i < 60 * 14; i++) {
+      p.update(h, { gas: 1, reverse: 0 });
+      moved = Math.max(moved, Math.abs(seesawAngle() - a0));
+      if (p.status().phase !== "driving") break;
+    }
+    out.seesaw = { moved, x: p.truck.body.x, phase: p.status().phase };
+
+    // Rueckwaerts-Level: mit Rueckwaertsgang kommt das Auto nach links
+    p.setLevel(8);
+    const rx0 = p.truck.body.x;
+    for (let i = 0; i < 60 * 8; i++) p.update(h, { gas: 0, reverse: 0.75 });
+    out.reverse = { dx: p.truck.body.x - rx0, phase: p.status().phase };
+
+    // Kisten lassen sich wegschieben
+    p.setLevel(4);
+    const crate = p.physics.bodies.find((b) => b.tag === "crate");
+    const cx0 = crate.x;
+    for (let i = 0; i < 60 * 12; i++) {
+      p.update(h, { gas: 1, reverse: 0 });
+      if (p.status().phase !== "driving") break;
+    }
+    out.crate = { dx: Math.abs(crate.x - cx0) };
+
+    out.levels = p.levels.length;
+    return out;
+  });
+
+  check("Parcours: Level 1 mit Vollgas schaffbar", pc.level1.phase === "won",
+    `Phase ${pc.level1.phase}, x=${pc.level1.x.toFixed(1)}, Zeit ${pc.level1.time.toFixed(1)} s`);
+  check("Parcours: Sprung über die Lücke", pc.level1.maxAir > 0.25, `${pc.level1.maxAir.toFixed(2)} s in der Luft`);
+  check("Parcours: keine NaN", !pc.level1.nan);
+  check("Parcours: Überschlag wird erkannt", pc.crash === "crashed", `Phase ${pc.crash}`);
+  check("Parcours: Wippe reagiert", pc.seesaw.moved > 0.05, `${(pc.seesaw.moved * 57.3).toFixed(1)} Grad gekippt`);
+  check("Parcours: Rückwärtsgang fährt nach links", pc.reverse.dx < -3, `${pc.reverse.dx.toFixed(1)} m`);
+  check("Parcours: Kisten sind schiebbar", pc.crate.dx > 0.5, `${pc.crate.dx.toFixed(2)} m verschoben`);
+  check("Parcours: 10 Level vorhanden", pc.levels === 10, `${pc.levels}`);
+  if (wantShots) await page.screenshot({ path: path.join(SHOTS, "08-parcours-level.png") });
+
+  // 10) Performance grob
   const perf = await page.evaluate(async () => {
     const t0 = performance.now();
     let frames = 0;

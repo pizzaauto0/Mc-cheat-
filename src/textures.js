@@ -184,3 +184,20 @@ export function skyTexture(top, horizon, bottom) {
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
 }
+
+/** Schachbrett -- fuer die Ziellinie im Parcours. */
+export function checkerTexture(cells = 4, a = "#ffffff", b = "#1b1f27") {
+  const S = 128;
+  const { c, g } = canvas(S, S);
+  const step = S / cells;
+  for (let y = 0; y < cells; y++) {
+    for (let x = 0; x < cells; x++) {
+      g.fillStyle = (x + y) % 2 === 0 ? a : b;
+      g.fillRect(x * step, y * step, step, step);
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.magFilter = THREE.NearestFilter;
+  return t;
+}

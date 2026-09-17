@@ -12,7 +12,7 @@ const KEY_ACTIONS = {
 
 const ONE_SHOT = {
   KeyC: "camera", KeyR: "reset", KeyT: "daytime", KeyM: "mute",
-  KeyF: "fullscreen", Escape: "pause", KeyP: "pause", KeyH: "help",
+  KeyF: "fullscreen", Escape: "pause", KeyP: "pause", KeyH: "help", KeyL: "levels",
 };
 
 export function createInput(target = window) {
